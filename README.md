@@ -171,3 +171,6 @@ Visit `http://127.0.0.1:8000/` to:
 - Admin view of reply statistics
 
 Feel free to fork, tweak, and file issues in the GitHub repository.
+
+## Contributing
+Pull requests are welcome!
