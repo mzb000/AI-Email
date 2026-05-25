@@ -174,3 +174,6 @@ Feel free to fork, tweak, and file issues in the GitHub repository.
 
 ## Contributing
 Pull requests are welcome!
+
+## Team
+Built with collaboration.
