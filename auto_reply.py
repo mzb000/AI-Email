@@ -74,10 +74,12 @@ def _fetch_target_mail(imap: imaplib.IMAP4_SSL) -> list[tuple[bytes, EmailMessag
     return messages
 
 
-def _should_skip_sender(address: str | None) -> bool:
+def _should_skip_sender(address: str | None, from_email: str | None = None) -> bool:
     if not address:
         return True
-    return address.strip().lower() == EMAIL.strip().lower()
+    sender_addr = address.strip().lower()
+    check_addr = (from_email or EMAIL).strip().lower()
+    return sender_addr == check_addr
 
 
 def _send_reply(
@@ -86,13 +88,15 @@ def _send_reply(
     template,
     replied_ids: Set[str],
     imap: imaplib.IMAP4_SSL,
+    email: str | None = None,
+    password: str | None = None,
 ) -> bool:
     message_id = original_message.get("Message-ID")
     if not message_id or message_id in replied_ids:
         return False
 
     sender_name, sender_email = parseaddr(original_message.get("From", ""))
-    if _should_skip_sender(sender_email):
+    if _should_skip_sender(sender_email, from_email=email):
         return False
 
     context = {
@@ -101,11 +105,12 @@ def _send_reply(
         "sender_name": sender_name or sender_email,
     }
 
-    reply_message = build_message(sender_email, template, **context)
+    from_email_addr = email if email else EMAIL
+    reply_message = build_message(sender_email, template, from_email=from_email_addr, **context)
     reply_message["In-Reply-To"] = original_message.get("Message-ID", "")
     reply_message["References"] = original_message.get("Message-ID", "")
 
-    with smtp_connection() as smtp:
+    with smtp_connection(email=email, password=password) as smtp:
         smtp.send_message(reply_message)
 
     replied_ids.add(message_id)
@@ -113,15 +118,21 @@ def _send_reply(
     return True
 
 
-def process_unread_messages() -> int:
+def process_unread_messages(
+    email: str | None = None,
+    password: str | None = None,
+) -> int:
     template = load_template(REPLY_TEMPLATE)
     replied_ids = _load_replied_ids()
     processed_count = 0
 
+    actual_email = email if email else EMAIL
+    actual_password = password if password else PASSWORD
+
     with imaplib.IMAP4_SSL(IMAP_SERVER) as imap:
-        imap.login(EMAIL, PASSWORD)
+        imap.login(actual_email, actual_password)
         for email_id, message in _fetch_target_mail(imap):
-            if _send_reply(email_id, message, template, replied_ids, imap):
+            if _send_reply(email_id, message, template, replied_ids, imap, email=email, password=password):
                 processed_count += 1
 
     if processed_count:
@@ -130,7 +141,14 @@ def process_unread_messages() -> int:
 
 
 class AutoReplyService:
-    def __init__(self, poll_interval: int | None = None) -> None:
+    def __init__(
+        self,
+        email: str | None = None,
+        password: str | None = None,
+        poll_interval: int | None = None,
+    ) -> None:
+        self.email = email
+        self.password = password
         self.poll_interval = max(5, poll_interval or AUTO_REPLY_POLL_INTERVAL)
         self._stop_event = Event()
         self._thread: Thread | None = None
@@ -153,10 +171,13 @@ class AutoReplyService:
         self._status_callback = status_callback
         self._stop_event.clear()
 
+        svc_email = self.email
+        svc_password = self.password
+
         def _worker() -> None:
             self._emit("Auto-reply worker started.")
             while not self._stop_event.is_set():
-                processed = process_unread_messages()
+                processed = process_unread_messages(email=svc_email, password=svc_password)
                 if processed:
                     self._emit(f"Auto-replied to {processed} message(s).")
                 else:
