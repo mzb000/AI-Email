@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}Templates — Nexus Mail{% endblock %}
+{% block page_title %}Email Templates{% endblock %}
+{% block page_subtitle %}Save and reuse your best messages{% endblock %}
+
+{% block header_actions %}
+<button class="btn btn-gradient btn-sm" onclick="openNewModal()">+ New Template</button>
+{% endblock %}
+
+{% block content %}
+
+{% if templates %}
+<div class="template-grid" style="margin-bottom:2rem;">
+  {% for t in templates %}
+  <div class="template-card">
+    <div class="flex items-center justify-between">
+      <div class="template-name">{{ t.name }}</div>
+      <span class="badge badge-primary" style="font-size:0.65rem;">Template</span>
+    </div>
+    <div class="template-subject">
+      <span class="text-muted text-xs">Subject:</span> {{ t.subject or '(empty)' }}
+    </div>
+    <div class="template-preview">{{ t.body }}</div>
+    <div class="template-meta">Updated {{ t.updated_at }}</div>
+    <div class="template-actions">
+      <button class="btn btn-secondary btn-sm" onclick="editTemplate({{ t.id }}, {{ t.name | tojson }}, {{ t.subject | tojson }}, {{ t.body | tojson }})">
+        ✏ Edit
+      </button>
+      <a href="/compose?template_id={{ t.id }}" class="btn btn-ghost btn-sm">✉ Use</a>
+      <form method="post" action="/templates/{{ t.id }}/delete" style="display:inline;" onsubmit="return confirm('Delete this template?')">
+        <button type="submit" class="btn btn-danger btn-sm">🗑</button>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+{% else %}
+<div class="empty-state" style="min-height:300px;margin-bottom:2rem;">
+  <div class="empty-icon">📋</div>
+  <div class="empty-title">No templates yet</div>
+  <div class="empty-desc">Create reusable email templates to speed up your campaigns.</div>
+  <button class="btn btn-gradient" onclick="openNewModal()">+ Create First Template</button>
+</div>
+{% endif %}
+
+<!-- New/Edit template form -->
+<div class="card" style="max-width:680px;" id="template-form-card">
+  <div class="card-header">
+    <span class="card-title" id="form-title">+ New Template</span>
+  </div>
+  <div class="card-body">
+    <form method="post" action="/templates/save">
+      <input type="hidden" name="template_id" id="form-template-id" value="" />
+
+      <div class="form-group">
+        <label class="form-label">Template Name</label>
+        <input class="form-control" type="text" name="name" id="form-name"
+          placeholder="e.g. Welcome Email" required />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Subject Line</label>
+        <input class="form-control" type="text" name="subject" id="form-subject"
+          placeholder="Email subject" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Body</label>
+        <textarea class="form-control" name="body" id="form-body" rows="10"
+          placeholder="Write your template message here…"></textarea>
+        <div class="form-hint">
+          You can use placeholders like <code style="background:var(--surface-3);padding:0.1rem 0.3rem;border-radius:4px;">{name}</code>,
+          <code style="background:var(--surface-3);padding:0.1rem 0.3rem;border-radius:4px;">{email}</code>, etc.
+        </div>
+      </div>
+
+      <div class="flex gap-1">
+        <button type="submit" class="btn btn-gradient">💾 Save Template</button>
+        <button type="button" class="btn btn-ghost" onclick="resetForm()">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function openNewModal() {
+  resetForm();
+  document.getElementById('template-form-card').scrollIntoView({ behavior: 'smooth' });
+  document.getElementById('form-name').focus();
+}
+
+function editTemplate(id, name, subject, body) {
+  document.getElementById('form-template-id').value = id;
+  document.getElementById('form-name').value = name;
+  document.getElementById('form-subject').value = subject;
+  document.getElementById('form-body').value = body;
+  document.getElementById('form-title').textContent = '✏ Edit Template';
+  document.getElementById('template-form-card').scrollIntoView({ behavior: 'smooth' });
+}
+
+function resetForm() {
+  document.getElementById('form-template-id').value = '';
+  document.getElementById('form-name').value = '';
+  document.getElementById('form-subject').value = '';
+  document.getElementById('form-body').value = '';
+  document.getElementById('form-title').textContent = '+ New Template';
+}
+</script>
+{% endblock %}

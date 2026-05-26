@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title %}Inbox — Nexus Mail{% endblock %}
+{% block page_title %}Inbox{% endblock %}
+{% block page_subtitle %}{{ mailbox | length }} email(s) loaded{% endblock %}
+
+{% block header_actions %}
+<form method="get" action="/inbox" style="display:flex;gap:0.5rem;">
+  <input class="form-control" type="search" name="q" value="{{ query }}"
+    placeholder="Search emails…" style="width:220px;" />
+  <button type="submit" class="btn btn-secondary btn-sm">Search</button>
+  {% if query %}<a href="/inbox" class="btn btn-ghost btn-sm">✕ Clear</a>{% endif %}
+</form>
+<button onclick="refreshInbox(this)" class="btn btn-secondary btn-sm" style="margin-left:0.25rem;">
+  🔄 Refresh
+</button>
+{% endblock %}
+
+{% block content %}
+
+{% if error_msg %}
+<div class="alert alert-error">
+  <strong>IMAP Error:</strong> {{ error_msg }}
+  — <a href="/settings?tab=gmail" style="color:#fca5a5;">Check your Gmail credentials</a>
+</div>
+{% endif %}
+
+{% if mailbox %}
+<div class="inbox-layout">
+  <!-- Email list -->
+  <div class="email-list" id="email-list">
+    {% for msg in mailbox %}
+    <article class="email-card"
+      data-payload='{{ {
+        "subject": msg.subject or "(No subject)",
+        "from": msg["from"],
+        "dateShort": msg.date_short or msg.date,
+        "dateFull": msg.date_full or msg.date,
+        "dateIso": msg.date_iso,
+        "body": msg.body
+      } | tojson | e }}'>
+      <div class="email-avatar">{{ msg["from"][:2] | upper }}</div>
+      <div class="email-info">
+        <div class="email-from">{{ msg["from"][:45] }}</div>
+        <div class="email-subject">{{ msg.subject or "(No subject)" }}</div>
+        <div class="email-snippet">{{ msg.body[:90] }}{% if msg.body | length > 90 %}…{% endif %}</div>
+      </div>
+      <div class="email-meta">
+        <span class="email-time">{{ msg.date_short or '' }}</span>
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+
+  <!-- Email viewer -->
+  <div class="email-viewer" id="email-viewer">
+    <div class="viewer-empty">
+      <div class="viewer-empty-icon">✉</div>
+      <div class="empty-title">Select an email</div>
+      <div class="empty-desc">Click any email on the left to read it here.</div>
+    </div>
+  </div>
+</div>
+
+{% else %}
+<div class="empty-state" style="min-height:400px;">
+  <div class="empty-icon">📭</div>
+  <div class="empty-title">
+    {% if query %}No emails matching "{{ query }}"{% else %}Inbox is empty{% endif %}
+  </div>
+  <div class="empty-desc">
+    {% if query %}
+      Try a different search term.
+    {% elif not user.gmail_address %}
+      <a href="/settings?tab=gmail">Connect your Gmail account</a> to see your inbox.
+    {% else %}
+      No emails to show yet.
+    {% endif %}
+  </div>
+  {% if query %}<a href="/inbox" class="btn btn-ghost btn-sm">Clear search</a>{% endif %}
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Email viewer
+(function() {
+  const cards  = document.querySelectorAll('.email-card');
+  const viewer = document.getElementById('email-viewer');
+  if (!cards.length || !viewer) return;
+
+  cards.forEach(card => {
+    card.addEventListener('click', () => {
+      cards.forEach(c => c.classList.remove('active'));
+      card.classList.add('active');
+      let p = {};
+      try { p = JSON.parse(card.dataset.payload || '{}'); } catch {}
+      const { subject, from, dateFull, dateShort, body } = p;
+      const safeBody = (body || '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      viewer.innerHTML = `
+        <div class="viewer-header">
+          <div class="viewer-subject">${subject || '(No subject)'}</div>
+          <div class="viewer-from">From: ${from || ''}</div>
+          <div class="viewer-date">${dateFull || dateShort || ''}</div>
+        </div>
+        <div class="viewer-body">${safeBody}</div>
+        <div class="viewer-actions">
+          <a href="/compose?to=${encodeURIComponent(from||'')}&subject=${encodeURIComponent('Re: '+(subject||''))}"
+             class="btn btn-secondary btn-sm">↩ Reply</a>
+          <a href="/compose?subject=${encodeURIComponent('Fwd: '+(subject||''))}"
+             class="btn btn-ghost btn-sm">⤴ Forward</a>
+        </div>
+      `;
+    });
+  });
+})();
+
+// Refresh inbox
+async function refreshInbox(btn) {
+  const orig = btn.innerHTML;
+  btn.innerHTML = '<span class="spinner"></span>';
+  btn.disabled = true;
+  try {
+    const res  = await fetch('/inbox/refresh', { method: 'POST' });
+    const data = await res.json();
+    if (data.ok) {
+      btn.innerHTML = '✓ Refreshed';
+      setTimeout(() => location.reload(), 600);
+    } else {
+      btn.innerHTML = '✕ ' + (data.error || 'Error');
+      setTimeout(() => { btn.innerHTML = orig; btn.disabled = false; }, 2000);
+    }
+  } catch {
+    btn.innerHTML = orig;
+    btn.disabled = false;
+  }
+}
+</script>
+{% endblock %}

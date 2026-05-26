@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}Compose — Nexus Mail{% endblock %}
+{% block page_title %}Compose Email{% endblock %}
+{% block page_subtitle %}Send a single email to anyone{% endblock %}
+
+{% block content %}
+
+<div style="max-width:680px;">
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">✉ New Message</span>
+      <span class="badge badge-primary">Single send</span>
+    </div>
+    <div class="card-body">
+      <form method="post" action="/compose" enctype="multipart/form-data" id="compose-form">
+
+        <div class="form-group">
+          <label class="form-label" for="to">To</label>
+          <input class="form-control" type="email" id="to" name="to"
+            placeholder="recipient@example.com"
+            value="{{ prefill_to }}"
+            required autocomplete="off" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="subject">Subject</label>
+          <input class="form-control" type="text" id="subject" name="subject"
+            placeholder="Enter subject line"
+            value="{{ prefill_subject }}"
+            required />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="body">Message</label>
+          <textarea class="form-control" id="body" name="body" rows="12"
+            placeholder="Write your message here…" required>{{ prefill_body }}</textarea>
+          <div class="form-hint">Plain text. Use {name} placeholders if needed.</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Attachments <span class="text-muted">(optional)</span></label>
+          <input class="form-control" type="file" name="attachments" multiple
+            style="padding:0.4rem;" />
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="flex gap-1 items-center">
+          <button type="submit" class="btn btn-gradient" id="send-btn">
+            <span id="send-label">📤 Send Email</span>
+            <span id="send-spinner" class="spinner" style="display:none;"></span>
+          </button>
+          <a href="/" class="btn btn-ghost">Cancel</a>
+          <span id="char-count" class="text-muted text-xs" style="margin-left:auto;">0 chars</span>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <!-- Template picker -->
+  <div class="card" style="margin-top:1.25rem;">
+    <div class="card-header">
+      <span class="card-title">📋 Use a Template</span>
+      <a href="/templates" class="btn btn-ghost btn-sm">Manage →</a>
+    </div>
+    <div class="card-body" id="template-list">
+      <p class="text-muted text-sm">
+        Loading templates… or <a href="/templates">create one</a>.
+      </p>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Char counter
+const bodyEl = document.getElementById('body');
+const countEl = document.getElementById('char-count');
+if (bodyEl && countEl) {
+  const update = () => countEl.textContent = bodyEl.value.length + ' chars';
+  bodyEl.addEventListener('input', update);
+  update();
+}
+
+// Spinner on submit
+document.getElementById('compose-form').addEventListener('submit', () => {
+  document.getElementById('send-label').style.display = 'none';
+  document.getElementById('send-spinner').style.display = 'inline-block';
+  document.getElementById('send-btn').disabled = true;
+});
+
+// Load templates via API
+(async () => {
+  try {
+    const res = await fetch('/api/templates');
+    if (!res.ok) return;
+    const data = await res.json();
+    const list = document.getElementById('template-list');
+    if (!data.templates || !data.templates.length) {
+      list.innerHTML = '<p class="text-muted text-sm">No templates saved yet. <a href="/templates">Create one</a>.</p>';
+      return;
+    }
+    list.innerHTML = `<div class="template-grid" style="grid-template-columns:repeat(auto-fill,minmax(200px,1fr));">
+      ${data.templates.map(t => `
+        <div class="template-card" style="cursor:pointer;" onclick="applyTemplate(${JSON.stringify(t.subject)},${JSON.stringify(t.body)})">
+          <div class="template-name">${t.name}</div>
+          <div class="template-subject text-xs text-muted">${t.subject}</div>
+          <div class="template-preview">${t.body.substring(0,80)}…</div>
+        </div>
+      `).join('')}
+    </div>`;
+  } catch {}
+})();
+
+function applyTemplate(subject, body) {
+  document.getElementById('subject').value = subject;
+  document.getElementById('body').value = body;
+  document.getElementById('body').dispatchEvent(new Event('input'));
+  document.getElementById('subject').focus();
+}
+</script>
+{% endblock %}
