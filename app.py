@@ -409,7 +409,7 @@ async def dashboard(request: Request):
             "send_log": list(ud["send_log"]),
             "auto_reply_log": list(ud["auto_reply_log"]),
             "flash": flash,
-            "mailbox": get_mailbox_snapshot(),
+            "mailbox": get_mailbox_snapshot(email=user.gmail_address or None, password=user.gmail_app_password or None),
             "saved_drafts": list(ud["saved_drafts"]),
         },
     )
