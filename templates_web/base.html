@@ -1,19 +1,330 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>{% block title %}Nexus Mail{% endblock %}</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/static/styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+/* ═══════════════════════════════════════════════════
+   NEXUS MAIL — v3 Embedded Design System
+═══════════════════════════════════════════════════ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:16px;scroll-behavior:smooth}
+body{font-family:'Inter',system-ui,sans-serif;background:#07071a;color:#e2e8f0;min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+a{color:#818cf8;text-decoration:none}
+a:hover{text-decoration:underline}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#1e1e40;border-radius:99px}
+
+/* ── Layout ──────────────────────────────────── */
+.app-shell{display:flex;min-height:100vh}
+
+/* ── Sidebar ─────────────────────────────────── */
+.sidebar{
+  width:220px;flex-shrink:0;
+  background:#0a0a22;
+  border-right:1px solid rgba(255,255,255,0.05);
+  display:flex;flex-direction:column;
+  position:fixed;top:0;left:0;bottom:0;
+  z-index:100;overflow-y:auto;
+}
+.sidebar-brand{
+  display:flex;align-items:center;gap:0.625rem;
+  padding:1.375rem 1.125rem;
+  border-bottom:1px solid rgba(255,255,255,0.05);
+}
+.sidebar-logo{
+  width:2rem;height:2rem;border-radius:8px;flex-shrink:0;
+  background:linear-gradient(135deg,#6366f1,#a78bfa);
+  display:flex;align-items:center;justify-content:center;
+  font-size:0.9rem;
+  box-shadow:0 4px 12px rgba(99,102,241,0.35);
+}
+.sidebar-brand-name{
+  font-size:0.9375rem;font-weight:700;letter-spacing:-0.02em;
+  background:linear-gradient(135deg,#c4b5fd,#818cf8);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.sidebar-nav{flex:1;padding:0.875rem 0.625rem;display:flex;flex-direction:column;gap:2px}
+.nav-section{
+  padding:0.875rem 0.75rem 0.25rem;
+  font-size:0.65rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#475569;
+}
+.nav-item{
+  display:flex;align-items:center;gap:0.625rem;
+  padding:0.5625rem 0.75rem;border-radius:8px;
+  color:#94a3b8;font-size:0.8375rem;font-weight:500;
+  text-decoration:none;transition:all 0.15s ease;position:relative;
+}
+.nav-item:hover{background:rgba(255,255,255,0.04);color:#e2e8f0;text-decoration:none}
+.nav-item.active{
+  background:rgba(99,102,241,0.12);color:#818cf8;
+  border:1px solid rgba(99,102,241,0.18);
+}
+.nav-item svg{width:1rem;height:1rem;flex-shrink:0}
+.nav-badge{
+  margin-left:auto;background:#6366f1;color:#fff;
+  font-size:0.65rem;font-weight:700;
+  padding:0.1rem 0.4rem;border-radius:99px;min-width:1.1rem;text-align:center;
+}
+.sidebar-footer{padding:0.875rem 0.625rem;border-top:1px solid rgba(255,255,255,0.05)}
+.user-card{
+  display:flex;align-items:center;gap:0.625rem;
+  padding:0.5rem 0.75rem;border-radius:8px;margin-bottom:0.5rem;
+}
+.user-avatar{
+  width:1.875rem;height:1.875rem;border-radius:50%;flex-shrink:0;
+  background:linear-gradient(135deg,#6366f1,#a78bfa);
+  display:flex;align-items:center;justify-content:center;
+  font-size:0.75rem;font-weight:700;color:#fff;
+}
+.user-info{flex:1;min-width:0}
+.user-name{font-size:0.8rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.user-meta{font-size:0.7rem;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.btn-signout{
+  width:100%;padding:0.45rem 0.75rem;
+  border:1px solid rgba(255,255,255,0.07);border-radius:7px;
+  background:transparent;color:#64748b;
+  font-family:inherit;font-size:0.775rem;cursor:pointer;transition:all 0.15s;
+}
+.btn-signout:hover{background:rgba(239,68,68,0.07);border-color:rgba(239,68,68,0.2);color:#f87171}
+
+/* ── Main content ────────────────────────────── */
+.main-content{margin-left:220px;flex:1;min-height:100vh;display:flex;flex-direction:column}
+.page-header{
+  padding:1.25rem 1.75rem 0;
+  background:#0a0a22;
+  border-bottom:1px solid rgba(255,255,255,0.05);
+  position:sticky;top:0;z-index:10;
+}
+.page-header-inner{display:flex;align-items:center;justify-content:space-between;padding-bottom:1.125rem}
+.page-title{font-size:1.1875rem;font-weight:700;letter-spacing:-0.025em}
+.page-subtitle{font-size:0.775rem;color:#64748b;margin-top:2px}
+.page-body{padding:1.625rem 1.75rem;flex:1}
+
+/* ── Flash alerts ────────────────────────────── */
+.alert{
+  display:flex;align-items:flex-start;gap:0.625rem;
+  padding:0.8rem 1rem;border-radius:8px;
+  font-size:0.85rem;line-height:1.5;margin-bottom:1.25rem;
+}
+.alert-success{background:rgba(16,185,129,0.09);border:1px solid rgba(16,185,129,0.22);color:#6ee7b7}
+.alert-error  {background:rgba(239,68,68,0.09);border:1px solid rgba(239,68,68,0.22);color:#fca5a5}
+.alert-warning{background:rgba(245,158,11,0.09);border:1px solid rgba(245,158,11,0.22);color:#fcd34d}
+.alert-info   {background:rgba(99,102,241,0.09);border:1px solid rgba(99,102,241,0.22);color:#a5b4fc}
+
+/* ── Stats grid ──────────────────────────────── */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem}
+.stat-card{
+  background:#0e0e28;border:1px solid rgba(255,255,255,0.05);
+  border-radius:12px;padding:1.25rem;transition:border-color 0.2s;
+}
+.stat-card:hover{border-color:rgba(255,255,255,0.09)}
+.stat-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.875rem}
+.stat-label{font-size:0.75rem;font-weight:500;color:#64748b;text-transform:uppercase;letter-spacing:0.06em}
+.stat-icon{
+  width:2rem;height:2rem;border-radius:7px;
+  display:flex;align-items:center;justify-content:center;font-size:0.875rem;
+}
+.stat-value{font-size:1.875rem;font-weight:700;letter-spacing:-0.04em;line-height:1}
+.stat-sub{font-size:0.725rem;color:#64748b;margin-top:0.375rem}
+.c-indigo{color:#818cf8}.c-green{color:#34d399}.c-purple{color:#c084fc}.c-amber{color:#fbbf24}
+.bg-indigo{background:rgba(99,102,241,0.1)}.bg-green{background:rgba(16,185,129,0.1)}
+.bg-purple{background:rgba(192,132,252,0.1)}.bg-amber{background:rgba(251,191,36,0.1)}
+
+/* ── Cards ───────────────────────────────────── */
+.card{background:#0e0e28;border:1px solid rgba(255,255,255,0.05);border-radius:12px;overflow:hidden}
+.card-hd{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.375rem;border-bottom:1px solid rgba(255,255,255,0.05)}
+.card-title{font-size:0.9rem;font-weight:600}
+.card-bd{padding:1.375rem}
+.card-ft{padding:0.875rem 1.375rem;border-top:1px solid rgba(255,255,255,0.05);display:flex;gap:0.625rem;align-items:center}
+
+/* ── Grid ────────────────────────────────────── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem}
+.g-inbox{display:grid;grid-template-columns:320px 1fr;gap:1.25rem}
+
+/* ── Buttons ─────────────────────────────────── */
+.btn{
+  display:inline-flex;align-items:center;gap:0.4rem;
+  padding:0.5rem 1.125rem;border-radius:8px;
+  font-family:inherit;font-size:0.8375rem;font-weight:500;
+  cursor:pointer;border:1px solid transparent;
+  transition:all 0.15s ease;text-decoration:none;white-space:nowrap;
+}
+.btn:hover{text-decoration:none}
+.btn:disabled{opacity:0.45;cursor:not-allowed;transform:none!important}
+.btn-primary{background:#6366f1;color:#fff;border-color:#6366f1}
+.btn-primary:hover{background:#818cf8;border-color:#818cf8}
+.btn-grad{background:linear-gradient(135deg,#6366f1,#818cf8);color:#fff;border:none;box-shadow:0 4px 16px rgba(99,102,241,0.3)}
+.btn-grad:hover{opacity:0.9;transform:translateY(-1px)}
+.btn-grad:active{transform:translateY(0)}
+.btn-sec{background:rgba(255,255,255,0.04);color:#94a3b8;border-color:rgba(255,255,255,0.08)}
+.btn-sec:hover{background:rgba(255,255,255,0.07);color:#e2e8f0}
+.btn-ghost{background:transparent;color:#64748b;border-color:rgba(255,255,255,0.07)}
+.btn-ghost:hover{background:rgba(255,255,255,0.04);color:#94a3b8}
+.btn-danger{background:rgba(239,68,68,0.08);color:#f87171;border-color:rgba(239,68,68,0.2)}
+.btn-danger:hover{background:rgba(239,68,68,0.14)}
+.btn-success{background:rgba(16,185,129,0.1);color:#34d399;border-color:rgba(16,185,129,0.22)}
+.btn-success:hover{background:rgba(16,185,129,0.17)}
+.btn-sm{padding:0.35rem 0.75rem;font-size:0.775rem}
+.btn-lg{padding:0.7rem 1.5rem;font-size:0.9375rem}
+.btn-full{width:100%;justify-content:center}
+
+/* ── Forms ───────────────────────────────────── */
+.form-group{margin-bottom:1rem}
+.form-label{display:block;font-size:0.775rem;font-weight:500;color:#94a3b8;margin-bottom:0.35rem}
+.form-ctrl{
+  width:100%;padding:0.6rem 0.875rem;
+  background:rgba(255,255,255,0.035);border:1px solid rgba(255,255,255,0.08);
+  border-radius:8px;color:#e2e8f0;font-family:inherit;font-size:0.875rem;
+  outline:none;transition:border-color 0.2s,box-shadow 0.2s;
+}
+.form-ctrl:focus{border-color:#6366f1;box-shadow:0 0 0 3px rgba(99,102,241,0.14)}
+.form-ctrl::placeholder{color:#334155}
+textarea.form-ctrl{resize:vertical;min-height:100px;line-height:1.6}
+.form-hint{margin-top:0.3rem;font-size:0.725rem;color:#475569;line-height:1.5}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:0.875rem}
+.input-wrap{position:relative}
+.input-wrap .form-ctrl{padding-right:2.5rem}
+.input-icon{position:absolute;right:0.75rem;top:50%;transform:translateY(-50%);color:#475569;cursor:pointer;display:flex;align-items:center}
+.input-icon:hover{color:#94a3b8}
+
+/* ── Badges ──────────────────────────────────── */
+.badge{display:inline-flex;align-items:center;gap:0.3rem;padding:0.2rem 0.6rem;border-radius:99px;font-size:0.7rem;font-weight:600}
+.badge-live{background:rgba(16,185,129,0.12);color:#34d399;border:1px solid rgba(16,185,129,0.25)}
+.badge-off{background:rgba(100,116,139,0.12);color:#94a3b8;border:1px solid rgba(100,116,139,0.18)}
+.badge-primary{background:rgba(99,102,241,0.12);color:#818cf8;border:1px solid rgba(99,102,241,0.22)}
+.badge-warn{background:rgba(245,158,11,0.12);color:#fbbf24;border:1px solid rgba(245,158,11,0.22)}
+.dot{display:inline-block;width:6px;height:6px;border-radius:50%}
+.dot-live{background:#10b981;animation:pulse 2s infinite}
+.dot-off{background:#475569}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.35}}
+
+/* ── Log panel ───────────────────────────────── */
+.log-panel{background:#06060f;border:1px solid rgba(255,255,255,0.05);border-radius:8px;overflow:hidden}
+.log-hd{padding:0.45rem 0.875rem;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:space-between;font-size:0.7rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#475569}
+.log-panel pre{padding:0.75rem 0.875rem;font-size:0.725rem;line-height:1.7;color:#64748b;max-height:160px;overflow-y:auto;white-space:pre-wrap;word-break:break-all;font-family:ui-monospace,'Cascadia Code','Fira Code',monospace}
+
+/* ── Email list ──────────────────────────────── */
+.email-list{background:#0e0e28;border:1px solid rgba(255,255,255,0.05);border-radius:12px;overflow:hidden;overflow-y:auto;max-height:420px}
+.email-card{display:flex;align-items:flex-start;gap:0.75rem;padding:0.8rem 1rem;border-bottom:1px solid rgba(255,255,255,0.04);cursor:pointer;transition:background 0.15s}
+.email-card:last-child{border-bottom:none}
+.email-card:hover{background:rgba(255,255,255,0.03)}
+.email-card.active{background:rgba(99,102,241,0.07);border-left:2px solid #6366f1}
+.email-av{width:2rem;height:2rem;border-radius:50%;background:linear-gradient(135deg,#1e1e40,#12122e);display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;color:#a78bfa;flex-shrink:0;text-transform:uppercase}
+.email-info{flex:1;min-width:0}
+.email-from{font-size:0.775rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:1px}
+.email-subj{font-size:0.75rem;color:#94a3b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:1px}
+.email-snip{font-size:0.7rem;color:#475569;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.email-time{font-size:0.675rem;color:#475569;white-space:nowrap;flex-shrink:0}
+.email-viewer{
+  background:#0e0e28;border:1px solid rgba(255,255,255,0.05);
+  border-radius:12px;display:flex;flex-direction:column;overflow:hidden;max-height:420px;
+}
+.viewer-hd{padding:1.125rem 1.25rem;border-bottom:1px solid rgba(255,255,255,0.05)}
+.viewer-subj{font-size:1rem;font-weight:700;margin-bottom:0.375rem}
+.viewer-from{font-size:0.775rem;color:#94a3b8;margin-bottom:2px}
+.viewer-date{font-size:0.7rem;color:#475569}
+.viewer-body{padding:1.125rem 1.25rem;flex:1;overflow-y:auto;font-size:0.8375rem;line-height:1.8;white-space:pre-wrap;word-break:break-word;color:#94a3b8}
+.viewer-actions{padding:0.875rem 1.25rem;border-top:1px solid rgba(255,255,255,0.05);display:flex;gap:0.5rem}
+.viewer-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0.625rem;color:#475569;padding:2rem}
+.viewer-empty-icon{font-size:2.5rem;opacity:0.2}
+
+/* ── Settings ────────────────────────────────── */
+.tabs{display:flex;border-bottom:1px solid rgba(255,255,255,0.05);margin-bottom:1.75rem}
+.tab-btn{
+  padding:0.7rem 1.125rem;font-size:0.825rem;font-weight:500;color:#64748b;
+  background:transparent;border:none;border-bottom:2px solid transparent;
+  cursor:pointer;font-family:inherit;transition:all 0.15s;text-decoration:none;
+  display:flex;align-items:center;gap:0.4rem;
+}
+.tab-btn:hover{color:#e2e8f0;text-decoration:none}
+.tab-btn.active{color:#818cf8;border-bottom-color:#6366f1}
+.settings-section{background:#0e0e28;border:1px solid rgba(255,255,255,0.05);border-radius:12px;overflow:hidden;margin-bottom:1.125rem}
+.settings-hd{padding:1rem 1.375rem;border-bottom:1px solid rgba(255,255,255,0.05)}
+.settings-title{font-size:0.9rem;font-weight:600;margin-bottom:0.25rem}
+.settings-desc{font-size:0.775rem;color:#64748b;line-height:1.5}
+.settings-bd{padding:1.375rem}
+.test-result{padding:0.7rem 0.875rem;border-radius:8px;font-size:0.8rem;display:none;margin-top:0.875rem}
+.test-ok{background:rgba(16,185,129,0.09);border:1px solid rgba(16,185,129,0.22);color:#6ee7b7}
+.test-err{background:rgba(239,68,68,0.09);border:1px solid rgba(239,68,68,0.22);color:#fca5a5}
+.danger-zone{background:rgba(239,68,68,0.04);border:1px solid rgba(239,68,68,0.18);border-radius:12px;padding:1.375rem}
+.danger-title{font-size:0.9rem;font-weight:600;color:#f87171;margin-bottom:0.375rem}
+.danger-desc{font-size:0.775rem;color:#64748b;margin-bottom:1.125rem;line-height:1.6}
+
+/* ── Password strength ───────────────────────── */
+.strength-bar{display:flex;gap:3px;margin-top:0.4rem}
+.strength-seg{height:3px;flex:1;border-radius:2px;background:#1e1e40;transition:background 0.3s}
+.s1{background:#ef4444}.s2{background:#f59e0b}.s3{background:#84cc16}.s4{background:#10b981}.s5{background:#34d399}
+.strength-lbl{font-size:0.7rem;color:#64748b;margin-top:0.25rem}
+
+/* ── Campaign row ────────────────────────────── */
+.c-row{display:flex;align-items:center;justify-content:space-between;padding:0.625rem 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:0.775rem}
+.c-row:last-child{border-bottom:none}
+.c-subj{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px}
+.c-meta{display:flex;gap:0.875rem;align-items:center;flex-shrink:0}
+.c-count{color:#34d399;font-weight:600}
+.c-date{color:#475569;font-size:0.7rem}
+
+/* ── Templates ───────────────────────────────── */
+.tmpl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1rem}
+.tmpl-card{background:#0e0e28;border:1px solid rgba(255,255,255,0.05);border-radius:12px;padding:1.125rem;display:flex;flex-direction:column;gap:0.625rem;transition:border-color 0.2s}
+.tmpl-card:hover{border-color:rgba(255,255,255,0.09)}
+.tmpl-name{font-size:0.875rem;font-weight:600}
+.tmpl-subj{font-size:0.75rem;color:#94a3b8}
+.tmpl-prev{font-size:0.7rem;color:#475569;line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.tmpl-meta{font-size:0.675rem;color:#334155;margin-top:auto}
+
+/* ── Auth pages ──────────────────────────────── */
+.auth-shell{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem 1rem;background:radial-gradient(ellipse at 20% 50%,rgba(99,102,241,0.12) 0%,transparent 50%),radial-gradient(ellipse at 80% 20%,rgba(167,139,250,0.1) 0%,transparent 45%),#07071a}
+.auth-card{width:100%;max-width:420px}
+.auth-logo-wrap{display:flex;align-items:center;gap:0.75rem;margin-bottom:2.25rem}
+.auth-logo{width:2.25rem;height:2.25rem;background:linear-gradient(135deg,#6366f1,#a78bfa);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:1.125rem}
+.auth-logo-text{font-size:1rem;font-weight:700;background:linear-gradient(135deg,#c4b5fd,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.auth-title{font-size:1.625rem;font-weight:700;letter-spacing:-0.035em;margin-bottom:0.35rem}
+.auth-sub{font-size:0.85rem;color:#64748b;line-height:1.5;margin-bottom:1.875rem}
+.auth-panel{background:#0e0e28;border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:1.875rem;box-shadow:0 8px 48px rgba(0,0,0,0.6)}
+.auth-footer{text-align:center;margin-top:1.375rem;font-size:0.825rem;color:#475569}
+.auth-footer a{color:#818cf8}
+
+/* ── Misc ────────────────────────────────────── */
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0.625rem;padding:3rem;color:#475569;text-align:center}
+.empty-icon{font-size:2.25rem;opacity:0.2}
+.empty-title{font-size:0.9rem;font-weight:600;color:#64748b}
+.empty-desc{font-size:0.775rem;line-height:1.5}
+.divider{height:1px;background:rgba(255,255,255,0.05);margin:1.25rem 0}
+.steps-list{list-style:none;counter-reset:steps;padding:0}
+.steps-list li{counter-increment:steps;display:flex;gap:0.625rem;align-items:flex-start;font-size:0.8rem;color:#94a3b8;margin-bottom:0.625rem;line-height:1.5}
+.steps-list li::before{content:counter(steps);flex-shrink:0;width:1.35rem;height:1.35rem;border-radius:50%;background:rgba(99,102,241,0.12);color:#818cf8;font-size:0.65rem;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:1px}
+.steps-list li a{color:#818cf8}
+.draft-status{font-size:0.7rem;color:#475569}
+.spinner{width:1rem;height:1rem;border:2px solid rgba(255,255,255,0.18);border-top-color:#fff;border-radius:50%;animation:spin 0.6s linear infinite;display:inline-block;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+.flex{display:flex}.flex-col{flex-direction:column}.items-center{align-items:center}.justify-between{justify-content:space-between}
+.gap-1{gap:0.5rem}.gap-2{gap:1rem}.gap-3{gap:1.5rem}
+.mt-1{margin-top:0.5rem}.mt-2{margin-top:1rem}.mb-1{margin-bottom:0.5rem}.mb-2{margin-bottom:1rem}
+.w-full{width:100%}.text-muted{color:#64748b}.text-sm{font-size:0.8125rem}.text-xs{font-size:0.725rem}
+.font-bold{font-weight:700}.font-medium{font-weight:500}
+.text-success{color:#34d399}.text-error{color:#f87171}.text-primary{color:#818cf8}
+
+@media(max-width:900px){
+  .sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}
+  .main-content{margin-left:0}.g2{grid-template-columns:1fr}
+  .g-inbox{grid-template-columns:1fr}.stats-grid{grid-template-columns:1fr 1fr}.page-body{padding:1rem}
+}
+@media(max-width:600px){.stats-grid{grid-template-columns:1fr}.tmpl-grid{grid-template-columns:1fr}}
+  </style>
   {% block head %}{% endblock %}
 </head>
 <body>
 <div class="app-shell">
 
-  <!-- ── Sidebar ─────────────────────────────────────────────── -->
+  <!-- Sidebar -->
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-brand">
       <div class="sidebar-logo">✉</div>
@@ -21,45 +332,36 @@
     </div>
 
     <nav class="sidebar-nav">
-      <a href="/" class="nav-item {% if active == 'dashboard' %}active{% endif %}">
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      <a href="/" class="nav-item {% if active=='dashboard' %}active{% endif %}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
         Dashboard
       </a>
-
-      <a href="/inbox" class="nav-item {% if active == 'inbox' %}active{% endif %}">
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+      <a href="/inbox" class="nav-item {% if active=='inbox' %}active{% endif %}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
         Inbox
-        {% if mailbox_count is defined and mailbox_count > 0 %}
-        <span class="nav-badge">{{ mailbox_count }}</span>
-        {% endif %}
       </a>
-
-      <a href="/compose" class="nav-item {% if active == 'compose' %}active{% endif %}">
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      <a href="/compose" class="nav-item {% if active=='compose' %}active{% endif %}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
         Compose
       </a>
-
       <div class="nav-section">Automation</div>
-
-      <a href="/templates" class="nav-item {% if active == 'templates' %}active{% endif %}">
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      <a href="/templates" class="nav-item {% if active=='templates' %}active{% endif %}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
         Templates
       </a>
-
       <div class="nav-section">Account</div>
-
-      <a href="/settings" class="nav-item {% if active == 'settings' %}active{% endif %}">
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93L17.66 6.34A8 8 0 1 0 21 12h-1"/><path d="M22 12h-1"/></svg>
+      <a href="/settings" class="nav-item {% if active=='settings' %}active{% endif %}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93L17.66 6.34A8 8 0 1 0 21 12h-1"/></svg>
         Settings
       </a>
     </nav>
 
     <div class="sidebar-footer">
       <div class="user-card">
-        <div class="user-avatar">{{ user.name[0] | upper if user else 'U' }}</div>
+        <div class="user-avatar">{{ user.name[0]|upper if user else 'U' }}</div>
         <div class="user-info">
           <div class="user-name">{{ user.name if user else 'User' }}</div>
-          <div class="user-role">{{ user.gmail_address or user.email if user else '' }}</div>
+          <div class="user-meta">{{ (user.gmail_address or user.email) if user else '' }}</div>
         </div>
       </div>
       <form method="post" action="/logout">
@@ -68,33 +370,27 @@
     </div>
   </aside>
 
-  <!-- ── Main ─────────────────────────────────────────────────── -->
+  <!-- Main -->
   <div class="main-content">
     <div class="page-header">
       <div class="page-header-inner">
         <div>
-          <div class="page-title">{% block page_title %}Dashboard{% endblock %}</div>
+          <div class="page-title">{% block page_title %}{% endblock %}</div>
           <div class="page-subtitle">{% block page_subtitle %}{% endblock %}</div>
         </div>
-        <div class="flex items-center gap-2">
-          {% block header_actions %}{% endblock %}
-        </div>
+        <div class="flex items-center gap-1">{% block header_actions %}{% endblock %}</div>
       </div>
     </div>
 
     <div class="page-body">
       {% if flash %}
-      <div class="alert alert-{{ flash.level }}">
-        {{ flash.text }}
-      </div>
+      <div class="alert alert-{{ flash.level }}">{{ flash.text }}</div>
       {% endif %}
-
       {% block content %}{% endblock %}
     </div>
   </div>
 
 </div>
-
 {% block scripts %}{% endblock %}
 </body>
 </html>
