@@ -12,6 +12,18 @@
 
 <body>
     <div class="page-shell">
+        {% if user is defined and user %}
+        <nav style="display:flex;align-items:center;justify-content:space-between;padding:0.75rem 1.5rem;border-bottom:1px solid rgba(255,255,255,0.06);margin-bottom:0.5rem;">
+            <span style="font-family:'Sora',sans-serif;font-size:0.95rem;font-weight:600;background:linear-gradient(135deg,#a78bfa,#60a5fa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Nexus Mail</span>
+            <div style="display:flex;align-items:center;gap:1rem;font-size:0.82rem;">
+                <span style="opacity:0.55;">{{ user.name }}</span>
+                <a href="/settings" style="color:#a78bfa;text-decoration:none;opacity:0.8;" onmouseenter="this.style.opacity=1" onmouseleave="this.style.opacity=0.8">Settings</a>
+                <form method="post" action="/logout" style="display:inline;margin:0;">
+                    <button type="submit" style="background:none;border:1px solid rgba(255,255,255,0.12);border-radius:0.4rem;color:inherit;font-family:inherit;font-size:0.82rem;padding:0.3rem 0.75rem;cursor:pointer;opacity:0.6;" onmouseenter="this.style.opacity=1" onmouseleave="this.style.opacity=0.6">Sign out</button>
+                </form>
+            </div>
+        </nav>
+        {% endif %}
         <header class="hero">
             <div class="hero-copy">
                 <p class="eyebrow">Nexus automation suite</p>

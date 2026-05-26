@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Settings — Nexus Mail</title>
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=Sora:wght@500;600&display=swap" />
+    <link rel="stylesheet" href="/static/styles.css" />
+    <style>
+        .settings-shell {
+            min-height: 100vh;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 3rem 1rem 4rem;
+        }
+
+        .settings-card {
+            width: 100%;
+            max-width: 540px;
+        }
+
+        .settings-header {
+            margin-bottom: 2rem;
+        }
+
+        .settings-header .eyebrow {
+            font-size: 0.75rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            opacity: 0.5;
+            margin-bottom: 0.4rem;
+        }
+
+        .settings-header h1 {
+            font-family: 'Sora', sans-serif;
+            font-size: 1.75rem;
+            font-weight: 600;
+            margin: 0 0 0.25rem;
+            background: linear-gradient(135deg, #a78bfa, #60a5fa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .settings-header .user-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: rgba(167, 139, 250, 0.1);
+            border: 1px solid rgba(167, 139, 250, 0.25);
+            border-radius: 2rem;
+            padding: 0.3rem 0.85rem;
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+        }
+
+        .settings-section {
+            background: var(--surface, #1a1a2e);
+            border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+            border-radius: 1.25rem;
+            padding: 2rem;
+            margin-bottom: 1.25rem;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
+        }
+
+        .settings-section h2 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin: 0 0 0.5rem;
+        }
+
+        .settings-section .section-desc {
+            font-size: 0.82rem;
+            opacity: 0.5;
+            margin: 0 0 1.5rem;
+            line-height: 1.5;
+        }
+
+        .settings-form label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 500;
+            opacity: 0.7;
+            margin-bottom: 0.35rem;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .settings-form input[type="text"],
+        .settings-form input[type="email"],
+        .settings-form input[type="password"] {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 0.7rem 1rem;
+            border-radius: 0.6rem;
+            border: 1px solid var(--border, rgba(255, 255, 255, 0.1));
+            background: rgba(255, 255, 255, 0.04);
+            color: inherit;
+            font-family: inherit;
+            font-size: 0.95rem;
+            margin-bottom: 1.1rem;
+            transition: border-color 0.2s;
+            outline: none;
+        }
+
+        .settings-form input:focus {
+            border-color: #a78bfa;
+        }
+
+        .field-hint {
+            font-size: 0.75rem;
+            opacity: 0.45;
+            margin-top: -0.75rem;
+            margin-bottom: 1.1rem;
+            line-height: 1.45;
+        }
+
+        .field-hint a {
+            color: #a78bfa;
+            text-decoration: none;
+        }
+
+        .field-hint a:hover {
+            text-decoration: underline;
+        }
+
+        .settings-actions {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-top: 0.5rem;
+        }
+
+        .settings-save {
+            padding: 0.7rem 1.75rem;
+            border-radius: 0.6rem;
+            border: none;
+            background: linear-gradient(135deg, #a78bfa, #60a5fa);
+            color: #fff;
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.15s;
+        }
+
+        .settings-save:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .settings-save:active {
+            transform: translateY(0);
+        }
+
+        .back-link {
+            font-size: 0.85rem;
+            color: #a78bfa;
+            text-decoration: none;
+            opacity: 0.8;
+        }
+
+        .back-link:hover {
+            opacity: 1;
+            text-decoration: underline;
+        }
+
+        .alert {
+            border-radius: 0.6rem;
+            padding: 0.75rem 1rem;
+            font-size: 0.875rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .alert.error {
+            background: rgba(239, 68, 68, 0.12);
+            border: 1px solid rgba(239, 68, 68, 0.35);
+            color: #fca5a5;
+        }
+
+        .alert.success {
+            background: rgba(52, 211, 153, 0.12);
+            border: 1px solid rgba(52, 211, 153, 0.35);
+            color: #6ee7b7;
+        }
+
+        .alert.welcome {
+            background: rgba(96, 165, 250, 0.12);
+            border: 1px solid rgba(96, 165, 250, 0.35);
+            color: #93c5fd;
+        }
+
+        .steps-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            counter-reset: steps;
+        }
+
+        .steps-list li {
+            counter-increment: steps;
+            display: flex;
+            gap: 0.75rem;
+            align-items: flex-start;
+            font-size: 0.82rem;
+            opacity: 0.65;
+            margin-bottom: 0.6rem;
+            line-height: 1.5;
+        }
+
+        .steps-list li::before {
+            content: counter(steps);
+            flex-shrink: 0;
+            width: 1.4rem;
+            height: 1.4rem;
+            border-radius: 50%;
+            background: rgba(167, 139, 250, 0.2);
+            color: #a78bfa;
+            font-size: 0.7rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 0.05rem;
+        }
+
+        .steps-list li a {
+            color: #a78bfa;
+            text-decoration: none;
+        }
+
+        .steps-list li a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="settings-shell">
+        <div class="settings-card">
+            <div class="settings-header">
+                <p class="eyebrow">Nexus automation suite</p>
+                <h1>Account Settings</h1>
+                <span class="user-pill">{{ user.name }} &middot; {{ user.email }}</span>
+            </div>
+
+            {% if welcome %}
+            <div class="alert welcome">
+                Welcome to Nexus Mail! Connect your Gmail account below to get started.
+            </div>
+            {% endif %}
+
+            {% if error %}
+            <div class="alert error">{{ error }}</div>
+            {% endif %}
+
+            {% if success %}
+            <div class="alert success">{{ success }}</div>
+            {% endif %}
+
+            <div class="settings-section">
+                <h2>Gmail Credentials</h2>
+                <p class="section-desc">
+                    Nexus Mail uses your Gmail address and an App Password to send and receive emails on your behalf.
+                    Your credentials are stored securely and never shared.
+                </p>
+
+                <form class="settings-form" method="post" action="/settings">
+                    <label for="gmail_address">Gmail address</label>
+                    <input
+                        type="email"
+                        id="gmail_address"
+                        name="gmail_address"
+                        placeholder="yourname@gmail.com"
+                        value="{{ user.gmail_address or '' }}"
+                        autocomplete="off"
+                    />
+
+                    <label for="gmail_app_password">Gmail app password</label>
+                    <input
+                        type="password"
+                        id="gmail_app_password"
+                        name="gmail_app_password"
+                        placeholder="xxxx xxxx xxxx xxxx"
+                        value="{{ user.gmail_app_password or '' }}"
+                        autocomplete="off"
+                    />
+                    <p class="field-hint">
+                        This is a 16-character app-specific password, not your regular Gmail password.
+                        <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener">Generate one here</a>.
+                    </p>
+
+                    <div class="settings-actions">
+                        <button type="submit" class="settings-save">Save settings</button>
+                        <a href="/" class="back-link">Back to dashboard</a>
+                    </div>
+                </form>
+            </div>
+
+            <div class="settings-section">
+                <h2>How to get a Gmail App Password</h2>
+                <ul class="steps-list">
+                    <li>Make sure 2-Step Verification is enabled on your Google account.</li>
+                    <li>Go to <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener">myaccount.google.com/apppasswords</a>.</li>
+                    <li>Select "Mail" as the app and "Other" as the device, then name it "Nexus Mail".</li>
+                    <li>Copy the 16-character password shown and paste it in the field above.</li>
+                    <li>Click "Save settings" — you're ready to go.</li>
+                </ul>
+            </div>
+
+            <div style="text-align: center; margin-top: 1.5rem;">
+                <form method="post" action="/logout" style="display: inline;">
+                    <button type="submit" class="ghost" style="font-size: 0.82rem; opacity: 0.5;">Sign out</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
