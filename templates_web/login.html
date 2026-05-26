@@ -5,69 +5,471 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Sign In — Nexus Mail</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/static/styles.css" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary:   #6366f1;
+      --primary-h: #818cf8;
+      --accent:    #a78bfa;
+      --bg:        #07071a;
+      --surface:   #0d0d26;
+      --border:    rgba(255,255,255,0.07);
+      --text:      #e2e8f0;
+      --muted:     #64748b;
+    }
+
+    html, body { height: 100%; }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Left panel ─────────────────────────────────── */
+    .left-panel {
+      flex: 1;
+      background:
+        radial-gradient(ellipse at 30% 20%, rgba(99,102,241,0.35) 0%, transparent 55%),
+        radial-gradient(ellipse at 70% 80%, rgba(167,139,250,0.25) 0%, transparent 50%),
+        linear-gradient(160deg, #0a0a28 0%, #0d0d30 50%, #07071a 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 4rem 4rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .left-panel::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%236366f1' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+      opacity: 0.4;
+      pointer-events: none;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 4rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .brand-icon {
+      width: 2.75rem; height: 2.75rem;
+      background: linear-gradient(135deg, #6366f1, #a78bfa);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.25rem;
+      box-shadow: 0 8px 32px rgba(99,102,241,0.4);
+    }
+
+    .brand-name {
+      font-size: 1.125rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #c4b5fd, #818cf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-headline {
+      font-size: clamp(1.75rem, 3vw, 2.5rem);
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      line-height: 1.15;
+      margin-bottom: 1.25rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-headline em {
+      font-style: normal;
+      background: linear-gradient(135deg, #818cf8, #a78bfa, #c084fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-sub {
+      font-size: 1rem;
+      color: #94a3b8;
+      line-height: 1.7;
+      max-width: 380px;
+      margin-bottom: 3rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .feature-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.875rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .feature-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 0.875rem;
+      color: #94a3b8;
+    }
+
+    .feature-check {
+      width: 1.5rem; height: 1.5rem;
+      border-radius: 50%;
+      background: rgba(99,102,241,0.15);
+      border: 1px solid rgba(99,102,241,0.3);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.7rem;
+      color: #818cf8;
+      flex-shrink: 0;
+    }
+
+    .floating-card {
+      position: absolute;
+      bottom: 3rem; right: -1rem;
+      background: rgba(13,13,38,0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
+      padding: 1rem 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.875rem;
+      max-width: 280px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      z-index: 2;
+      animation: floatUp 0.8s ease 0.4s both;
+    }
+
+    .floating-avatar {
+      width: 2.25rem; height: 2.25rem;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #6366f1, #a78bfa);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .floating-text { font-size: 0.8rem; }
+    .floating-text strong { display: block; font-size: 0.875rem; margin-bottom: 0.1rem; }
+    .floating-text span { color: #64748b; }
+
+    @keyframes floatUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to   { transform: translateY(0);    opacity: 1; }
+    }
+
+    /* ── Right panel ────────────────────────────────── */
+    .right-panel {
+      width: 480px;
+      flex-shrink: 0;
+      background: var(--surface);
+      border-left: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 3rem 2.5rem;
+    }
+
+    .login-header {
+      margin-bottom: 2.25rem;
+    }
+
+    .login-title {
+      font-size: 1.625rem;
+      font-weight: 700;
+      letter-spacing: -0.035em;
+      margin-bottom: 0.375rem;
+    }
+
+    .login-subtitle {
+      font-size: 0.875rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    /* ── Form elements ──────────────────────────────── */
+    .form-group { margin-bottom: 1.125rem; }
+
+    .form-label {
+      display: block;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: #94a3b8;
+      margin-bottom: 0.4rem;
+    }
+
+    .input-wrap { position: relative; }
+
+    .form-input {
+      width: 100%;
+      padding: 0.7rem 1rem;
+      padding-right: 2.75rem;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 10px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .form-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(99,102,241,0.18);
+    }
+
+    .form-input::placeholder { color: #475569; }
+
+    .input-icon {
+      position: absolute;
+      right: 0.875rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #475569;
+      cursor: pointer;
+      display: flex; align-items: center;
+      transition: color 0.15s;
+    }
+
+    .input-icon:hover { color: #94a3b8; }
+
+    /* Error alert */
+    .alert-box {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.625rem;
+      padding: 0.75rem 0.875rem;
+      background: rgba(239,68,68,0.08);
+      border: 1px solid rgba(239,68,68,0.22);
+      border-radius: 8px;
+      margin-bottom: 1.25rem;
+      font-size: 0.85rem;
+      color: #fca5a5;
+      line-height: 1.5;
+    }
+
+    /* Submit button */
+    .btn-login {
+      width: 100%;
+      padding: 0.75rem 1.25rem;
+      background: linear-gradient(135deg, #6366f1, #818cf8);
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+      font-family: inherit;
+      font-size: 0.9375rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-top: 0.25rem;
+      transition: opacity 0.2s, transform 0.15s;
+      box-shadow: 0 4px 20px rgba(99,102,241,0.35);
+    }
+
+    .btn-login:hover  { opacity: 0.92; transform: translateY(-1px); }
+    .btn-login:active { transform: translateY(0); }
+    .btn-login:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+
+    /* Spinner */
+    .spin {
+      width: 1rem; height: 1rem;
+      border: 2px solid rgba(255,255,255,0.25);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      display: none;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Lock badge */
+    .lock-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 1.5rem;
+      padding: 0.625rem 0.875rem;
+      background: rgba(99,102,241,0.07);
+      border: 1px solid rgba(99,102,241,0.15);
+      border-radius: 8px;
+      font-size: 0.78rem;
+      color: #64748b;
+    }
+
+    .lock-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: #10b981;
+      flex-shrink: 0;
+      animation: blink 2s ease infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.3; }
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 9999px; }
+
+    /* Responsive */
+    @media (max-width: 860px) {
+      .left-panel { display: none; }
+      .right-panel { width: 100%; border-left: none; padding: 2.5rem 1.5rem; }
+    }
+  </style>
 </head>
 <body>
-<div class="auth-shell">
-  <div class="auth-card">
 
-    <div class="auth-brand">
-      <div class="auth-logo">✉</div>
-      <span class="auth-logo-text">Nexus Mail</span>
+<!-- ── Left branding panel ──────────────────────────────────── -->
+<div class="left-panel">
+  <div class="brand">
+    <div class="brand-icon">✉</div>
+    <span class="brand-name">Nexus Mail</span>
+  </div>
+
+  <h1 class="hero-headline">
+    Email automation<br />
+    <em>built for results.</em>
+  </h1>
+
+  <p class="hero-sub">
+    Send bulk campaigns, auto-reply to leads, and manage your inbox — all from one intelligent dashboard.
+  </p>
+
+  <ul class="feature-list">
+    <li class="feature-item">
+      <div class="feature-check">✓</div>
+      <span>Bulk email campaigns with smart batching</span>
+    </li>
+    <li class="feature-item">
+      <div class="feature-check">✓</div>
+      <span>Auto-reply service with custom templates</span>
+    </li>
+    <li class="feature-item">
+      <div class="feature-check">✓</div>
+      <span>Real-time inbox monitoring &amp; viewer</span>
+    </li>
+    <li class="feature-item">
+      <div class="feature-check">✓</div>
+      <span>Secure Gmail integration with App Passwords</span>
+    </li>
+  </ul>
+
+  <!-- Floating card decoration -->
+  <div class="floating-card">
+    <div class="floating-avatar">📤</div>
+    <div class="floating-text">
+      <strong>Campaign sent</strong>
+      <span>1,240 emails · 0 failures</span>
     </div>
-
-    <h1 class="auth-title">Welcome back</h1>
-    <p class="auth-subtitle">Sign in to manage and automate your email campaigns.</p>
-
-    <div class="auth-panel">
-      {% if error %}
-      <div class="alert alert-error">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-        <span>{{ error }}</span>
-      </div>
-      {% endif %}
-
-      <form method="post" action="/login" id="login-form">
-        <div class="form-group">
-          <label class="form-label" for="email">Email address</label>
-          <input class="form-control" type="email" id="email" name="email"
-            placeholder="you@example.com" required autocomplete="email" />
-        </div>
-
-        <div class="form-group">
-          <label class="form-label" for="password">Password</label>
-          <div class="input-group">
-            <input class="form-control" type="password" id="password" name="password"
-              placeholder="••••••••" required autocomplete="current-password" />
-            <span class="input-icon" id="toggle-pw" title="Show/hide">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-            </span>
-          </div>
-        </div>
-
-        <button type="submit" class="btn btn-gradient btn-full btn-lg" id="submit-btn" style="margin-top:0.25rem;">
-          <span id="submit-label">Sign in</span>
-          <span id="submit-spinner" class="spinner" style="display:none;"></span>
-        </button>
-      </form>
-    </div>
-
-    <div class="auth-footer">
-      Don't have an account? <a href="/signup">Create one free</a>
-    </div>
-
   </div>
 </div>
+
+<!-- ── Right login panel ────────────────────────────────────── -->
+<div class="right-panel">
+
+  <div class="login-header">
+    <div class="brand" style="margin-bottom:2rem;">
+      <div class="brand-icon" style="width:2rem;height:2rem;font-size:1rem;">✉</div>
+      <span class="brand-name" style="font-size:0.95rem;">Nexus Mail</span>
+    </div>
+    <div class="login-title">Welcome back</div>
+    <div class="login-subtitle">Sign in to access your automation dashboard.</div>
+  </div>
+
+  {% if error %}
+  <div class="alert-box">
+    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    {{ error }}
+  </div>
+  {% endif %}
+
+  <form method="post" action="/login" id="login-form" autocomplete="on">
+
+    <div class="form-group">
+      <label class="form-label" for="email">Email address</label>
+      <div class="input-wrap">
+        <input class="form-input" type="email" id="email" name="email"
+          placeholder="your@email.com" required autocomplete="email" />
+        <span class="input-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        </span>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="password">Password</label>
+      <div class="input-wrap">
+        <input class="form-input" type="password" id="password" name="password"
+          placeholder="••••••••" required autocomplete="current-password" />
+        <span class="input-icon" id="toggle-pw" title="Show/hide password">
+          <svg id="eye-show" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          <svg id="eye-hide" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+        </span>
+      </div>
+    </div>
+
+    <button type="submit" class="btn-login" id="submit-btn">
+      <span id="btn-label">Sign in</span>
+      <span class="spin" id="btn-spin"></span>
+    </button>
+
+  </form>
+
+  <div class="lock-badge">
+    <div class="lock-dot"></div>
+    <span>Secured with bcrypt encryption · Rate-limited login protection</span>
+  </div>
+
+</div>
+
 <script>
-  document.getElementById('toggle-pw').addEventListener('click', () => {
-    const f = document.getElementById('password');
-    f.type = f.type === 'text' ? 'password' : 'text';
+  // Toggle password visibility
+  const toggle  = document.getElementById('toggle-pw');
+  const pwField = document.getElementById('password');
+  const eyeShow = document.getElementById('eye-show');
+  const eyeHide = document.getElementById('eye-hide');
+
+  toggle.addEventListener('click', () => {
+    const isHidden = pwField.type === 'password';
+    pwField.type  = isHidden ? 'text' : 'password';
+    eyeShow.style.display = isHidden ? 'none'  : '';
+    eyeHide.style.display = isHidden ? ''      : 'none';
   });
-  document.getElementById('login-form').addEventListener('submit', () => {
-    document.getElementById('submit-label').style.display = 'none';
-    document.getElementById('submit-spinner').style.display = 'inline-block';
-    document.getElementById('submit-btn').disabled = true;
+
+  // Loading state on submit
+  document.getElementById('login-form').addEventListener('submit', (e) => {
+    const btn   = document.getElementById('submit-btn');
+    const label = document.getElementById('btn-label');
+    const spin  = document.getElementById('btn-spin');
+    label.style.display = 'none';
+    spin.style.display  = 'block';
+    btn.disabled = true;
   });
 </script>
 </body>

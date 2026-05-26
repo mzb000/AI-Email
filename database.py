@@ -111,3 +111,35 @@ def _run_migrations() -> None:
 
 Base.metadata.create_all(bind=engine)
 _run_migrations()
+
+
+# ── Owner account seeding ─────────────────────────────────────────────────────
+
+OWNER_EMAIL    = "mzoraofficial@gmail.com"
+OWNER_PASSWORD = "zabi12345"
+OWNER_NAME     = "Zabiullah"
+
+
+def seed_owner_account() -> None:
+    """Create the owner account if it does not exist yet."""
+    # Import here to avoid circular imports
+    from passlib.context import CryptContext
+    _ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+    db = SessionLocal()
+    try:
+        existing = db.query(User).filter(User.email == OWNER_EMAIL).first()
+        if not existing:
+            owner = User(
+                name=OWNER_NAME,
+                email=OWNER_EMAIL,
+                password_hash=_ctx.hash(OWNER_PASSWORD),
+                gmail_address="",
+                gmail_app_password="",
+                is_active=True,
+                role="admin",
+            )
+            db.add(owner)
+            db.commit()
+    finally:
+        db.close()

@@ -31,7 +31,7 @@ from auth import (
     LOCKOUT_MINUTES,
     MAX_ATTEMPTS,
 )
-from database import CampaignLog, SessionLocal, User, UserEmailTemplate
+from database import CampaignLog, SessionLocal, User, UserEmailTemplate, seed_owner_account
 from config import (
     AUTO_REPLY_POLL_INTERVAL,
     AUTO_REPLY_SEARCH_CRITERIA,
@@ -48,6 +48,9 @@ TEMPLATE_DIR = BASE_DIR / "templates_web"
 STATIC_DIR = BASE_DIR / "static"
 
 app = FastAPI(title="Nexus Mail")
+
+# Seed the owner account on every startup
+seed_owner_account()
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 _jinja_env = Environment(
@@ -249,63 +252,13 @@ async def login_submit(
 
 @app.get("/signup")
 async def signup_page(request: Request):
-    if get_current_user(request):
-        return _redirect("/")
-    return _render("signup.html", {"request": request, "error": "", "errors": []})
+    # Signup is disabled — only the owner account can log in
+    return _redirect("/login")
 
 
 @app.post("/signup")
-async def signup_submit(
-    request: Request,
-    name: str = Form(...),
-    email: str = Form(...),
-    password: str = Form(...),
-    confirm_password: str = Form(...),
-):
-    name = name.strip()
-    email = email.strip().lower()
-
-    errors: list[str] = []
-
-    if not name:
-        errors.append("Full name is required.")
-    if not _EMAIL_RE.fullmatch(email):
-        errors.append("Please enter a valid email address.")
-    if password != confirm_password:
-        errors.append("Passwords do not match.")
-
-    strength_errors = validate_password_strength(password)
-    errors.extend(strength_errors)
-
-    if errors:
-        return _render("signup.html", {"request": request, "error": errors[0], "errors": errors})
-
-    db = SessionLocal()
-    try:
-        if db.query(User).filter(User.email == email).first():
-            return _render("signup.html", {
-                "request": request,
-                "error": "An account with this email already exists.",
-                "errors": [],
-            })
-        new_user = User(
-            name=name,
-            email=email,
-            password_hash=hash_password(password),
-            gmail_address="",
-            gmail_app_password="",
-        )
-        db.add(new_user)
-        db.commit()
-        db.refresh(new_user)
-        user_id = new_user.id
-    finally:
-        db.close()
-
-    token = create_token(user_id)
-    resp = _redirect("/settings?welcome=1")
-    resp.set_cookie("token", token, httponly=True, max_age=60 * 60 * 24 * 30, samesite="lax", secure=False)
-    return resp
+async def signup_submit(request: Request):
+    return _redirect("/login")
 
 
 @app.post("/logout")
