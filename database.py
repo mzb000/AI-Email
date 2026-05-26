@@ -115,14 +115,15 @@ _run_migrations()
 
 # ── Owner account seeding ─────────────────────────────────────────────────────
 
-OWNER_EMAIL    = "mzoraofficial@gmail.com"
-OWNER_PASSWORD = "zabi12345"
-OWNER_NAME     = "Zabiullah"
+OWNER_EMAIL          = "mzoraofficial@gmail.com"
+OWNER_PASSWORD       = "zabi12345"
+OWNER_NAME           = "Zabiullah"
+OWNER_GMAIL_ADDRESS  = "mzoraofficial@gmail.com"
+OWNER_GMAIL_APP_PW   = "sirq iaem echn ynid"
 
 
 def seed_owner_account() -> None:
-    """Create the owner account if it does not exist yet."""
-    # Import here to avoid circular imports
+    """Create the owner account if it does not exist yet, and keep Gmail credentials up to date."""
     from passlib.context import CryptContext
     _ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -134,12 +135,17 @@ def seed_owner_account() -> None:
                 name=OWNER_NAME,
                 email=OWNER_EMAIL,
                 password_hash=_ctx.hash(OWNER_PASSWORD),
-                gmail_address="",
-                gmail_app_password="",
+                gmail_address=OWNER_GMAIL_ADDRESS,
+                gmail_app_password=OWNER_GMAIL_APP_PW,
                 is_active=True,
                 role="admin",
             )
             db.add(owner)
+            db.commit()
+        else:
+            # Always keep Gmail credentials in sync with this file
+            existing.gmail_address    = OWNER_GMAIL_ADDRESS
+            existing.gmail_app_password = OWNER_GMAIL_APP_PW
             db.commit()
     finally:
         db.close()
