@@ -38,7 +38,7 @@ from config import (
     BATCH_SIZE,
     DELAY,
 )
-from mailbox import get_mailbox_snapshot
+from mailbox import fetch_recent_emails, get_mailbox_snapshot
 from send_emails import EmailTemplate, send_bulk_emails
 
 # ── App setup ─────────────────────────────────────────────────────────────────
@@ -349,12 +349,14 @@ async def inbox_page(request: Request, q: str = ""):
     error_msg = ""
     if user.gmail_address and user.gmail_app_password:
         try:
-            mailbox = get_mailbox_snapshot(
-                email=user.gmail_address or None,
-                password=user.gmail_app_password or None,
+            mailbox = fetch_recent_emails(
+                email=user.gmail_address,
+                password=user.gmail_app_password,
             )
         except Exception as e:
-            error_msg = str(e)
+            import traceback, logging
+            logging.error("IMAP fetch failed for %s: %s\n%s", user.gmail_address, e, traceback.format_exc())
+            error_msg = f"IMAP Error: {e}"
     else:
         flash = {"text": "Connect your Gmail account in Settings to see your inbox.", "level": "warning"}
 
@@ -386,12 +388,14 @@ async def inbox_refresh(request: Request):
     if not user.gmail_address or not user.gmail_app_password:
         return JSONResponse({"ok": False, "error": "No Gmail credentials"})
     try:
-        mailbox = get_mailbox_snapshot(
+        mailbox = fetch_recent_emails(
             email=user.gmail_address,
             password=user.gmail_app_password,
         )
         return JSONResponse({"ok": True, "count": len(mailbox)})
     except Exception as e:
+        import logging
+        logging.error("IMAP refresh failed for %s: %s", user.gmail_address, e)
         return JSONResponse({"ok": False, "error": str(e)})
 
 
