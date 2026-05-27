@@ -1036,6 +1036,33 @@ async def api_templates(request: Request):
         db.close()
 
 
+@app.get("/api/debug-inbox")
+async def debug_inbox(request: Request):
+    """Temporary debug endpoint — shows IMAP test result."""
+    user, _ = _require_auth(request)
+    if not user:
+        return JSONResponse({"error": "Not authenticated"}, status_code=401)
+    info = {
+        "gmail_address": user.gmail_address or "(not set)",
+        "app_password_set": bool(user.gmail_app_password),
+        "app_password_len": len(user.gmail_app_password or ""),
+        "imap_server": user.imap_server or "imap.gmail.com",
+    }
+    try:
+        msgs = fetch_recent_emails(
+            email=user.gmail_address,
+            password=user.gmail_app_password,
+        )
+        info["imap_status"] = "OK"
+        info["email_count"] = len(msgs)
+    except Exception as e:
+        import traceback
+        info["imap_status"] = "ERROR"
+        info["error"] = str(e)
+        info["traceback"] = traceback.format_exc()
+    return JSONResponse(info)
+
+
 @app.get("/draft/suggest")
 async def suggest_draft(request: Request, q: str = ""):
     user, _ = _require_auth(request)
