@@ -79,9 +79,9 @@ def _derive_date_fields(raw_date: str | None) -> Dict[str, str]:
     return defaults
 
 
-def fetch_recent_emails(limit: int = MAILBOX_FETCH_LIMIT, email: str | None = None, password: str | None = None) -> List[Dict[str, Any]]:
+def fetch_recent_emails(limit: int = MAILBOX_FETCH_LIMIT, email_addr: str | None = None, password: str | None = None) -> List[Dict[str, Any]]:
     """Fetch the newest emails from the INBOX for display and persist them."""
-    _email = email or EMAIL
+    _email = email_addr or EMAIL
     _password = password or PASSWORD
 
     with imaplib.IMAP4_SSL(IMAP_SERVER) as imap:
@@ -126,8 +126,8 @@ def fetch_recent_emails(limit: int = MAILBOX_FETCH_LIMIT, email: str | None = No
         return messages
 
 
-def get_mailbox_snapshot(limit: int = MAILBOX_FETCH_LIMIT, email: str | None = None, password: str | None = None) -> List[Dict[str, Any]]:
+def get_mailbox_snapshot(limit: int = MAILBOX_FETCH_LIMIT, email_addr: str | None = None, password: str | None = None) -> List[Dict[str, Any]]:
     try:
-        return fetch_recent_emails(limit, email=email, password=password)
-    except Exception:  # pragma: no cover - fallback to cache if IMAP fails
+        return fetch_recent_emails(limit, email_addr=email_addr, password=password)
+    except Exception:
         return _load_cached_messages()[:limit]

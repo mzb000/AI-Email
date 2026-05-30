@@ -308,7 +308,7 @@ async def dashboard(request: Request):
     mailbox = []
     if user.gmail_address and user.gmail_app_password:
         mailbox = get_mailbox_snapshot(
-            email=user.gmail_address or None,
+            email_addr=user.gmail_address or None,
             password=user.gmail_app_password or None,
         )
 
@@ -350,7 +350,7 @@ async def inbox_page(request: Request, q: str = ""):
     if user.gmail_address and user.gmail_app_password:
         try:
             mailbox = fetch_recent_emails(
-                email=user.gmail_address,
+                email_addr=user.gmail_address,
                 password=user.gmail_app_password,
             )
         except Exception as e:
@@ -389,7 +389,7 @@ async def inbox_refresh(request: Request):
         return JSONResponse({"ok": False, "error": "No Gmail credentials"})
     try:
         mailbox = fetch_recent_emails(
-            email=user.gmail_address,
+            email_addr=user.gmail_address,
             password=user.gmail_app_password,
         )
         return JSONResponse({"ok": True, "count": len(mailbox)})
@@ -1050,7 +1050,7 @@ async def debug_inbox(request: Request):
     }
     try:
         msgs = fetch_recent_emails(
-            email=user.gmail_address,
+            email_addr=user.gmail_address,
             password=user.gmail_app_password,
         )
         info["imap_status"] = "OK"

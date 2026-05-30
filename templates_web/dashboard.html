@@ -15,177 +15,228 @@
 
 <!-- ── Stats ──────────────────────────────────────────────────── -->
 <div class="stats-grid">
+
   <div class="stat-card">
-    <div class="stat-icon">
-      <span class="stat-label">Inbox</span>
-      <div class="stat-icon-box" style="background:rgba(99,102,241,0.1);">📥</div>
+    <div class="stat-icon bg-indigo">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
     </div>
-    <div class="stat-value primary">{{ mailbox | length }}</div>
-    <div class="stat-trend">Recent emails loaded</div>
+    <div class="stat-value c-indigo">{{ mailbox | length }}</div>
+    <div class="stat-label">Inbox</div>
+    <div class="stat-sub">Recent emails loaded</div>
   </div>
 
   <div class="stat-card">
-    <div class="stat-icon">
-      <span class="stat-label">Emails Sent</span>
-      <div class="stat-icon-box" style="background:rgba(16,185,129,0.1);">📤</div>
+    <div class="stat-icon bg-green">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
     </div>
-    <div class="stat-value success">{{ total_sent }}</div>
-    <div class="stat-trend">{{ campaigns_total }} campaign(s)</div>
+    <div class="stat-value c-green">{{ total_sent }}</div>
+    <div class="stat-label">Emails Sent</div>
+    <div class="stat-sub">{{ campaigns_total }} campaign(s)</div>
   </div>
 
   <div class="stat-card">
-    <div class="stat-icon">
-      <span class="stat-label">Templates</span>
-      <div class="stat-icon-box" style="background:rgba(167,139,250,0.1);">📋</div>
+    <div class="stat-icon bg-purple">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#c084fc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
     </div>
-    <div class="stat-value accent">{{ templates_count }}</div>
-    <div class="stat-trend"><a href="/templates" style="color:var(--accent);">Manage templates →</a></div>
+    <div class="stat-value c-purple">{{ templates_count }}</div>
+    <div class="stat-label">Templates</div>
+    <div class="stat-sub"><a href="/templates" class="c-purple" style="text-decoration:none;">Manage templates &rarr;</a></div>
   </div>
 
   <div class="stat-card">
-    <div class="stat-icon">
-      <span class="stat-label">Auto-Reply</span>
-      <div class="stat-icon-box" style="background:rgba({% if auto_reply_running %}16,185,129{% else %}100,116,139{% endif %},0.1);">🤖</div>
+    <div class="stat-icon" style="background:rgba({% if auto_reply_running %}16,185,129{% else %}100,116,139{% endif %},0.1);">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="{% if auto_reply_running %}#34d399{% else %}#94a3b8{% endif %}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
     </div>
-    <div class="stat-value {{ 'success' if auto_reply_running else 'text-muted' }}">
-      {{ auto_reply_count }}
-    </div>
-    <div class="stat-trend">
+    <div class="stat-value {{ 'c-green' if auto_reply_running else 'text-muted' }}">{{ auto_reply_count }}</div>
+    <div class="stat-label">Auto-Reply</div>
+    <div class="stat-sub">
       {% if auto_reply_running %}
       <span class="badge badge-live"><span class="dot dot-live"></span> LIVE</span>
       {% else %}
-      <span class="badge badge-offline"><span class="dot dot-offline"></span> Paused</span>
+      <span class="badge badge-off"><span class="dot dot-offline"></span> Paused</span>
       {% endif %}
     </div>
   </div>
+
 </div>
 
 <!-- ── Quick actions ──────────────────────────────────────────── -->
-<div class="quick-actions">
-  <a href="/compose" class="btn btn-secondary">✉ Quick Compose</a>
-  <a href="/inbox" class="btn btn-secondary">📥 View Inbox</a>
-  <a href="/templates" class="btn btn-secondary">📋 Templates</a>
+<div class="quick-bar">
+  <a href="/compose" class="quick-btn">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+    Quick Compose
+  </a>
+  <a href="/inbox" class="quick-btn">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/></svg>
+    View Inbox
+  </a>
+  <a href="/templates" class="quick-btn">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+    Templates
+  </a>
   {% if not auto_reply_running %}
   <form method="post" action="/auto-reply/start" style="display:inline;">
-    <button type="submit" class="btn btn-success">▶ Start Auto-Reply</button>
+    <button type="submit" class="quick-btn" style="border-color:rgba(16,185,129,0.3);color:#34d399;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      Start Auto-Reply
+    </button>
   </form>
   {% else %}
   <form method="post" action="/auto-reply/stop" style="display:inline;">
-    <button type="submit" class="btn btn-danger">⏹ Stop Auto-Reply</button>
+    <button type="submit" class="quick-btn" style="border-color:rgba(239,68,68,0.3);color:#f87171;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12"/></svg>
+      Stop Auto-Reply
+    </button>
   </form>
   {% endif %}
 </div>
 
 <!-- ── Main grid ──────────────────────────────────────────────── -->
-<div class="grid-2" style="gap:1.5rem;margin-bottom:1.5rem;">
+<div class="grid-2" style="gap:1.5rem;margin-bottom:1.5rem;align-items:start;">
 
   <!-- Bulk Campaign -->
   <div class="card">
     <div class="card-header">
-      <span class="card-title">📤 Bulk Campaign</span>
-      <span class="badge badge-primary">Send to many</span>
+      <div>
+        <div class="card-title">Bulk Campaign</div>
+        <div style="font-size:0.75rem;color:#64748b;margin-top:2px;">Send to multiple recipients at once</div>
+      </div>
+      <span class="badge badge-primary">Broadcast</span>
     </div>
     <div class="card-body">
       <form method="post" action="/send" enctype="multipart/form-data" id="send-form">
+
         <div class="form-group">
           <label class="form-label">Recipients</label>
           <textarea class="form-control" name="recipients_text" rows="4"
             placeholder="user1@example.com&#10;user2@example.com&#10;(one per line or comma-separated)"
-            data-draft-field></textarea>
+            data-draft-field style="width:100%;padding:0.6rem 0.875rem;font-size:0.875rem;"></textarea>
         </div>
+
         <div class="form-group">
           <label class="form-label">Subject</label>
           <input class="form-control" name="subject" type="text"
             placeholder="Your email subject" required data-draft-field />
         </div>
+
         <div class="form-group">
           <label class="form-label">Message Body</label>
-          <textarea class="form-control" name="body" rows="5"
-            placeholder="Write your message here..." required data-draft-field></textarea>
+          <textarea class="form-control" name="body" rows="6"
+            placeholder="Write your message here..." required data-draft-field style="width:100%;padding:0.6rem 0.875rem;font-size:0.875rem;"></textarea>
         </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Delay (sec)</label>
+
+        <div class="form-row" style="margin-bottom:1rem;">
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">Delay (seconds)</label>
             <input class="form-control" name="delay" type="number" step="0.1" value="{{ default_delay }}" data-draft-field />
           </div>
-          <div class="form-group">
+          <div class="form-group" style="margin-bottom:0;">
             <label class="form-label">Batch size</label>
             <input class="form-control" name="batch_size" type="number" value="{{ default_batch_size }}" data-draft-field />
           </div>
         </div>
+
         <div class="form-group">
-          <label class="form-label">Attachments</label>
-          <input class="form-control" name="attachments" type="file" multiple style="padding:0.4rem;" />
+          <label class="form-label">Attachments <span class="text-muted">(optional)</span></label>
+          <div class="file-input-wrapper" id="file-wrapper-send">
+            <span class="file-input-label">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+              Choose Files
+            </span>
+            <input type="file" name="attachments" multiple onchange="updateFileName(this,'file-wrapper-send')" />
+            <span class="file-name-display" id="file-name-send">No file chosen</span>
+          </div>
         </div>
-        <div class="flex items-center gap-1" style="margin-bottom:0.75rem;">
-          <input type="checkbox" name="dry_run" id="dry_run" data-draft-field style="accent-color:var(--primary);" />
-          <label for="dry_run" class="form-label" style="margin:0;cursor:pointer;">Dry run (preview only)</label>
+
+        <div class="flex items-center gap-1" style="margin-bottom:1rem;">
+          <input type="checkbox" name="dry_run" id="dry_run" data-draft-field style="accent-color:#6366f1;width:15px;height:15px;" />
+          <label for="dry_run" class="form-label" style="margin:0;cursor:pointer;">Dry run (preview only, no emails sent)</label>
         </div>
+
         <div style="display:flex;gap:0.75rem;align-items:center;">
-          <button type="submit" class="btn btn-gradient">🚀 Launch Campaign</button>
+          <button type="submit" class="btn btn-gradient">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            Launch Campaign
+          </button>
           <span class="draft-status" id="draft-status">Drafts auto-save.</span>
         </div>
 
-        <!-- Suggestions -->
+        <!-- Template suggestions -->
         <div id="draft-suggestions" style="margin-top:0.75rem;display:flex;flex-direction:column;gap:0.375rem;"></div>
       </form>
     </div>
   </div>
 
   <!-- Auto-Reply + Logs -->
-  <div class="card">
-    <div class="card-header">
-      <span class="card-title">🤖 Auto-Reply Service</span>
-      {% if auto_reply_running %}
-      <span class="badge badge-live"><span class="dot dot-live"></span> LIVE</span>
-      {% else %}
-      <span class="badge badge-offline"><span class="dot dot-offline"></span> OFFLINE</span>
-      {% endif %}
-    </div>
-    <div class="card-body">
-      <p class="text-muted text-sm" style="margin-bottom:1rem;">
-        Polling every {{ auto_reply_poll_interval }}s · Criteria: "{{ auto_reply_search }}"
-      </p>
-      <div class="flex gap-1" style="margin-bottom:1.25rem;">
-        <form method="post" action="/auto-reply/start">
-          <button type="submit" class="btn btn-success btn-sm" {% if auto_reply_running %}disabled{% endif %}>▶ Start</button>
-        </form>
-        <form method="post" action="/auto-reply/stop">
-          <button type="submit" class="btn btn-danger btn-sm" {% if not auto_reply_running %}disabled{% endif %}>⏹ Stop</button>
-        </form>
-      </div>
+  <div style="display:flex;flex-direction:column;gap:1.25rem;">
 
-      <div class="log-panel" style="margin-bottom:1rem;">
-        <div class="log-panel-header">
-          <span>Auto-Reply Log</span>
-          <span class="badge badge-primary">{{ auto_reply_count }} replied</span>
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Auto-Reply Service</div>
+          <div style="font-size:0.75rem;color:#64748b;margin-top:2px;">Polls every {{ auto_reply_poll_interval }}s &middot; Criteria: &ldquo;{{ auto_reply_search }}&rdquo;</div>
         </div>
-        <pre>{% if auto_reply_log %}{% for l in auto_reply_log[-10:] %}{{ l }}
+        {% if auto_reply_running %}
+        <span class="badge badge-live"><span class="dot dot-live"></span> ONLINE</span>
+        {% else %}
+        <span class="badge badge-off"><span class="dot dot-offline"></span> OFFLINE</span>
+        {% endif %}
+      </div>
+      <div class="card-body">
+        <div class="flex gap-1" style="margin-bottom:1.25rem;">
+          <form method="post" action="/auto-reply/start">
+            <button type="submit" class="btn btn-success btn-sm" {% if auto_reply_running %}disabled{% endif %}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              Start
+            </button>
+          </form>
+          <form method="post" action="/auto-reply/stop">
+            <button type="submit" class="btn btn-danger btn-sm" {% if not auto_reply_running %}disabled{% endif %}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12"/></svg>
+              Stop
+            </button>
+          </form>
+        </div>
+
+        <div class="log-panel">
+          <div class="log-panel-header">
+            <span>Auto-Reply Log</span>
+            <span class="badge badge-primary">{{ auto_reply_count }} replied</span>
+          </div>
+          <pre>{% if auto_reply_log %}{% for l in auto_reply_log[-10:] %}{{ l }}
 {% endfor %}{% else %}No activity yet.{% endif %}</pre>
-      </div>
-
-      <div class="log-panel">
-        <div class="log-panel-header">Campaign Log</div>
-        <pre>{% if send_log %}{% for l in send_log[-10:] %}{{ l }}
-{% endfor %}{% else %}No campaigns sent yet.{% endif %}</pre>
-      </div>
-    </div>
-
-    {% if recent_campaigns %}
-    <div class="card-footer" style="flex-direction:column;align-items:stretch;">
-      <div style="font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin-bottom:0.5rem;">Recent Campaigns</div>
-      {% for c in recent_campaigns %}
-      <div class="campaign-row">
-        <span class="campaign-subject">{{ c.subject }}</span>
-        <div class="campaign-meta">
-          <span class="campaign-count">+{{ c.recipient_count }}</span>
-          <span class="campaign-date">{{ c.sent_at.strftime('%b %d') if c.sent_at else '' }}</span>
         </div>
       </div>
-      {% endfor %}
     </div>
-    {% endif %}
-  </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Campaign Log</div>
+      </div>
+      <div class="card-body" style="padding-bottom:0.5rem;">
+        <div class="log-panel" style="margin-bottom:0.75rem;">
+          <div class="log-panel-header"><span>Send Log</span></div>
+          <pre>{% if send_log %}{% for l in send_log[-10:] %}{{ l }}
+{% endfor %}{% else %}No campaigns sent yet.{% endif %}</pre>
+        </div>
+        {% if recent_campaigns %}
+        <div style="margin-top:0.75rem;">
+          <div style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:#475569;margin-bottom:0.5rem;">Recent Campaigns</div>
+          {% for c in recent_campaigns %}
+          <div class="campaign-row">
+            <span class="campaign-subject">{{ c.subject }}</span>
+            <div class="campaign-meta">
+              <span class="campaign-count">+{{ c.recipient_count }}</span>
+              <span class="campaign-date">{{ c.sent_at.strftime('%b %d') if c.sent_at else '' }}</span>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+  </div><!-- end right col -->
 
 </div>
 
@@ -193,10 +244,12 @@
 {% if mailbox %}
 <div class="card">
   <div class="card-header">
-    <span class="card-title">📥 Recent Inbox</span>
-    <div class="flex gap-1">
+    <div>
+      <div class="card-title">Recent Inbox</div>
+    </div>
+    <div class="flex gap-1 items-center">
       <span class="badge badge-primary">{{ mailbox | length }} shown</span>
-      <a href="/inbox" class="btn btn-ghost btn-sm">View all →</a>
+      <a href="/inbox" class="btn btn-ghost btn-sm">View all &rarr;</a>
     </div>
   </div>
   <div id="inbox-preview">
@@ -212,11 +265,11 @@
             "dateIso": msg.date_iso,
             "body": msg.body
           } | tojson | e }}'>
-          <div class="email-avatar">{{ msg["from"][:2] | upper }}</div>
+          <div class="email-av">{{ msg["from"][:2] | upper }}</div>
           <div class="email-info">
             <div class="email-from">{{ msg["from"][:40] }}</div>
-            <div class="email-subject">{{ msg.subject or "(No subject)" }}</div>
-            <div class="email-snippet">{{ msg.body[:80] }}{% if msg.body | length > 80 %}…{% endif %}</div>
+            <div class="email-subj">{{ msg.subject or "(No subject)" }}</div>
+            <div class="email-snip">{{ msg.body[:80] }}{% if msg.body | length > 80 %}&hellip;{% endif %}</div>
           </div>
           <div class="email-meta">
             <span class="email-time">{{ msg.date_short or '' }}</span>
@@ -227,8 +280,10 @@
 
       <div class="email-viewer" id="email-viewer">
         <div class="viewer-empty">
-          <div class="viewer-empty-icon">✉</div>
-          <div style="font-size:0.875rem;color:var(--muted-2);">Select an email to read</div>
+          <div class="viewer-empty-icon">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+          </div>
+          <div style="font-size:0.875rem;color:#475569;">Select an email to read</div>
         </div>
       </div>
     </div>
@@ -240,6 +295,16 @@
 
 {% block scripts %}
 <script>
+// File input display helper
+function updateFileName(input, wrapperId) {
+  const display = document.getElementById('file-name-send');
+  if (!display) return;
+  const files = input.files;
+  if (!files || !files.length) { display.textContent = 'No file chosen'; return; }
+  if (files.length === 1) { display.textContent = files[0].name; }
+  else { display.textContent = files.length + ' files selected'; }
+}
+
 (function() {
   // ── Draft auto-save ──────────────────────────────────────────
   const DRAFT_KEY = 'nexus-dashboard-draft';
@@ -350,7 +415,7 @@
         </div>
         <div class="viewer-body">${(body || '').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
         <div class="viewer-actions">
-          <a href="/compose?to=${encodeURIComponent(from||'')}&subject=${encodeURIComponent('Re: '+(subject||''))}" class="btn btn-secondary btn-sm">↩ Reply</a>
+          <a href="/compose?to=${encodeURIComponent(from||'')}&subject=${encodeURIComponent('Re: '+(subject||''))}" class="btn btn-secondary btn-sm">&larr; Reply</a>
         </div>
       `;
     });

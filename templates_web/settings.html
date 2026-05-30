@@ -8,143 +8,162 @@
 
 {% if welcome %}
 <div class="alert alert-info" style="margin-bottom:1.5rem;">
-  🎉 Welcome to Nexus Mail! Connect your Gmail account below to start sending and receiving emails.
+  Welcome to Nexus Mail! Connect your Gmail account below to start sending and receiving emails.
 </div>
 {% endif %}
 
 <!-- ── Tabs ─────────────────────────────────────────────────── -->
 <div class="tabs">
-  <a href="/settings?tab=gmail"    class="tab-btn {% if active_tab == 'gmail'    %}active{% endif %}">📧 Gmail</a>
-  <a href="/settings?tab=profile"  class="tab-btn {% if active_tab == 'profile'  %}active{% endif %}">👤 Profile</a>
-  <a href="/settings?tab=security" class="tab-btn {% if active_tab == 'security' %}active{% endif %}">🔒 Security</a>
-  <a href="/settings?tab=danger"   class="tab-btn {% if active_tab == 'danger'   %}active{% endif %}">⚠ Danger Zone</a>
+  <a href="/settings?tab=gmail"    class="tab-btn {% if active_tab == 'gmail'    %}active{% endif %}">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+    Gmail
+  </a>
+  <a href="/settings?tab=profile"  class="tab-btn {% if active_tab == 'profile'  %}active{% endif %}">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    Profile
+  </a>
+  <a href="/settings?tab=security" class="tab-btn {% if active_tab == 'security' %}active{% endif %}">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+    Security
+  </a>
+  <a href="/settings?tab=danger"   class="tab-btn {% if active_tab == 'danger'   %}active{% endif %}">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    Danger Zone
+  </a>
 </div>
 
-<div style="max-width:640px;">
+<div style="max-width:700px;">
 
 <!-- ── Gmail Tab ─────────────────────────────────────────────── -->
 {% if active_tab == 'gmail' %}
 
-<div class="settings-section">
-  <div class="settings-section-header">
-    <div class="settings-section-title">Gmail Credentials</div>
-    <div class="settings-section-desc">
-      Connect your Gmail account using an App Password. Your credentials are stored securely.
+<div class="page-card">
+  <div class="section-header">
+    <div>
+      <div class="section-title">Gmail Credentials</div>
+      <div class="section-sub">Connect your Gmail account using an App Password. Stored securely.</div>
     </div>
   </div>
-  <div class="settings-section-body">
-    <form method="post" action="/settings/gmail">
+  <form method="post" action="/settings/gmail">
 
-      <div class="form-group">
-        <label class="form-label">Gmail Address</label>
-        <input class="form-control" type="email" name="gmail_address"
-          placeholder="yourname@gmail.com"
-          value="{{ user.gmail_address or '' }}"
-          autocomplete="off" />
+    <div class="form-group">
+      <label class="form-label">Gmail Address</label>
+      <input class="form-control" type="email" name="gmail_address"
+        placeholder="yourname@gmail.com"
+        value="{{ user.gmail_address or '' }}"
+        autocomplete="off" />
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">App Password</label>
+      <div class="input-group" style="position:relative;display:flex;align-items:center;">
+        <input class="form-control" type="password" name="gmail_app_password" id="app-pw"
+          placeholder="xxxx xxxx xxxx xxxx"
+          value="{{ user.gmail_app_password or '' }}"
+          autocomplete="off"
+          style="padding-right:2.75rem;" />
+        <span class="input-icon" id="toggle-app-pw" style="position:absolute;right:0.75rem;cursor:pointer;color:#475569;" title="Toggle visibility">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </span>
       </div>
-
-      <div class="form-group">
-        <label class="form-label">App Password</label>
-        <div class="input-group">
-          <input class="form-control" type="password" name="gmail_app_password" id="app-pw"
-            placeholder="xxxx xxxx xxxx xxxx"
-            value="{{ user.gmail_app_password or '' }}"
-            autocomplete="off" />
-          <span class="input-icon" id="toggle-app-pw">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-          </span>
-        </div>
-        <div class="form-hint">
-          16-character App Password (not your regular Gmail password).
-          <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener">Generate one →</a>
-        </div>
+      <div class="form-hint">
+        16-character App Password (not your regular Gmail password).
+        <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener">Generate one &rarr;</a>
       </div>
+    </div>
 
-      <!-- Advanced server config (collapsible) -->
-      <details style="margin-bottom:1rem;">
-        <summary style="font-size:0.825rem;color:var(--muted-2);cursor:pointer;user-select:none;padding:0.5rem 0;">
-          ⚙ Advanced server settings (optional)
-        </summary>
-        <div style="padding-top:0.75rem;">
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">SMTP Server</label>
-              <input class="form-control" type="text" name="smtp_server"
-                value="{{ user.smtp_server or 'smtp.gmail.com' }}" />
-            </div>
-            <div class="form-group">
-              <label class="form-label">SMTP Port</label>
-              <input class="form-control" type="number" name="smtp_port"
-                value="{{ user.smtp_port or 587 }}" />
-            </div>
+    <!-- Advanced server config (collapsible) -->
+    <details style="margin-bottom:1.25rem;">
+      <summary style="font-size:0.825rem;color:#64748b;cursor:pointer;user-select:none;padding:0.5rem 0;list-style:none;display:flex;align-items:center;gap:0.4rem;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93L17.66 6.34A8 8 0 1 0 21 12h-1"/></svg>
+        Advanced server settings (optional)
+      </summary>
+      <div style="padding-top:0.875rem;border-top:1px solid rgba(255,255,255,0.05);margin-top:0.5rem;">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">SMTP Server</label>
+            <input class="form-control" type="text" name="smtp_server"
+              value="{{ user.smtp_server or 'smtp.gmail.com' }}" />
           </div>
           <div class="form-group">
-            <label class="form-label">IMAP Server</label>
-            <input class="form-control" type="text" name="imap_server"
-              value="{{ user.imap_server or 'imap.gmail.com' }}" />
+            <label class="form-label">SMTP Port</label>
+            <input class="form-control" type="number" name="smtp_port"
+              value="{{ user.smtp_port or 587 }}" />
           </div>
         </div>
-      </details>
-
-      <div class="flex gap-1 items-center" style="flex-wrap:wrap;">
-        <button type="submit" class="btn btn-gradient">💾 Save Credentials</button>
-        <button type="button" class="btn btn-success" id="test-btn" onclick="testConnection()">
-          <span id="test-label">🔌 Test Connection</span>
-          <span id="test-spinner" class="spinner" style="display:none;"></span>
-        </button>
+        <div class="form-group">
+          <label class="form-label">IMAP Server</label>
+          <input class="form-control" type="text" name="imap_server"
+            value="{{ user.imap_server or 'imap.gmail.com' }}" />
+        </div>
       </div>
-    </form>
+    </details>
 
-    <div class="test-result" id="test-result" style="margin-top:1rem;"></div>
-  </div>
+    <div class="flex gap-1 items-center" style="flex-wrap:wrap;">
+      <button type="submit" class="btn btn-gradient">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v14a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        Save Credentials
+      </button>
+      <button type="button" class="btn btn-success" id="test-btn" onclick="testConnection()">
+        <span id="test-label" style="display:flex;align-items:center;gap:0.4rem;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          Test Connection
+        </span>
+        <span id="test-spinner" class="spinner" style="display:none;"></span>
+      </button>
+    </div>
+  </form>
+
+  <div class="test-result" id="test-result" style="margin-top:1rem;"></div>
 </div>
 
-<div class="settings-section">
-  <div class="settings-section-header">
-    <div class="settings-section-title">How to get a Gmail App Password</div>
+<div class="page-card">
+  <div class="section-header">
+    <div class="section-title">How to get a Gmail App Password</div>
   </div>
-  <div class="settings-section-body">
-    <ol class="steps-list">
-      <li>Enable 2-Step Verification on your Google account at <a href="https://myaccount.google.com/security" target="_blank">myaccount.google.com/security</a>.</li>
-      <li>Go to <a href="https://myaccount.google.com/apppasswords" target="_blank">myaccount.google.com/apppasswords</a>.</li>
-      <li>Click <strong>Select app</strong> → choose "Mail", then <strong>Select device</strong> → "Other (custom name)".</li>
-      <li>Name it <strong>Nexus Mail</strong> and click <strong>Generate</strong>.</li>
-      <li>Copy the 16-character password and paste it in the field above.</li>
-    </ol>
-  </div>
+  <ol class="steps-list">
+    <li>Enable 2-Step Verification on your Google account at <a href="https://myaccount.google.com/security" target="_blank">myaccount.google.com/security</a>.</li>
+    <li>Go to <a href="https://myaccount.google.com/apppasswords" target="_blank">myaccount.google.com/apppasswords</a>.</li>
+    <li>Click <strong>Select app</strong> &rarr; choose &ldquo;Mail&rdquo;, then <strong>Select device</strong> &rarr; &ldquo;Other (custom name)&rdquo;.</li>
+    <li>Name it <strong>Nexus Mail</strong> and click <strong>Generate</strong>.</li>
+    <li>Copy the 16-character password and paste it in the field above.</li>
+  </ol>
 </div>
 
 {% elif active_tab == 'profile' %}
 
 <!-- ── Profile Tab ───────────────────────────────────────────── -->
-<div class="settings-section">
-  <div class="settings-section-header">
-    <div class="settings-section-title">Profile Information</div>
-    <div class="settings-section-desc">Update your display name.</div>
+<div class="page-card">
+  <div class="section-header">
+    <div>
+      <div class="section-title">Profile Information</div>
+      <div class="section-sub">Update your display name.</div>
+    </div>
   </div>
-  <div class="settings-section-body">
-    <form method="post" action="/settings/profile">
-      <div class="form-group">
-        <label class="form-label">Full Name</label>
-        <input class="form-control" type="text" name="name"
-          value="{{ user.name }}" required />
-      </div>
-      <div class="form-group">
-        <label class="form-label">Email Address <span class="text-muted">(read-only)</span></label>
-        <input class="form-control" type="email" value="{{ user.email }}" disabled
-          style="opacity:0.5;cursor:not-allowed;" />
-        <div class="form-hint">Account email cannot be changed.</div>
-      </div>
-      <button type="submit" class="btn btn-gradient">💾 Update Profile</button>
-    </form>
-  </div>
+  <form method="post" action="/settings/profile">
+    <div class="form-group">
+      <label class="form-label">Full Name</label>
+      <input class="form-control" type="text" name="name"
+        value="{{ user.name }}" required />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Email Address <span class="text-muted">(read-only)</span></label>
+      <input class="form-control" type="email" value="{{ user.email }}" disabled
+        style="opacity:0.5;cursor:not-allowed;" />
+      <div class="form-hint">Account email cannot be changed.</div>
+    </div>
+    <button type="submit" class="btn btn-gradient">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v14a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+      Update Profile
+    </button>
+  </form>
 </div>
 
-<div class="settings-section">
-  <div class="settings-section-header">
-    <div class="settings-section-title">Account Info</div>
+<div class="page-card">
+  <div class="section-header">
+    <div class="section-title">Account Info</div>
   </div>
-  <div class="settings-section-body">
+  <div style="display:flex;flex-direction:column;gap:0;">
     <div class="campaign-row">
       <span class="text-muted text-sm">Member since</span>
       <span class="text-sm">{{ user.created_at.strftime('%B %d, %Y') if user.created_at else 'N/A' }}</span>
@@ -163,76 +182,92 @@
 {% elif active_tab == 'security' %}
 
 <!-- ── Security Tab ──────────────────────────────────────────── -->
-<div class="settings-section">
-  <div class="settings-section-header">
-    <div class="settings-section-title">Change Password</div>
-    <div class="settings-section-desc">
-      Use a strong password with uppercase, lowercase, number and special character.
+<div class="page-card">
+  <div class="section-header">
+    <div>
+      <div class="section-title">Change Password</div>
+      <div class="section-sub">Use a strong password with uppercase, lowercase, number and special character.</div>
     </div>
   </div>
-  <div class="settings-section-body">
-    <form method="post" action="/settings/password">
-      <div class="form-group">
-        <label class="form-label">Current Password</label>
-        <div class="input-group">
-          <input class="form-control" type="password" name="current_password" id="cur-pw"
-            placeholder="Your current password" required />
-          <span class="input-icon" onclick="togglePw('cur-pw')">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-          </span>
-        </div>
+  <form method="post" action="/settings/password">
+    <div class="form-group">
+      <label class="form-label">Current Password</label>
+      <div style="position:relative;display:flex;align-items:center;">
+        <input class="form-control" type="password" name="current_password" id="cur-pw"
+          placeholder="Your current password" required
+          style="padding-right:2.75rem;" />
+        <span class="input-icon" onclick="togglePw('cur-pw')" style="position:absolute;right:0.75rem;cursor:pointer;color:#475569;" title="Toggle visibility">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </span>
       </div>
+    </div>
 
-      <div class="form-group">
-        <label class="form-label">New Password</label>
-        <input class="form-control" type="password" name="new_password" id="new-pw"
-          placeholder="New strong password" required oninput="updateStrength(this.value)" />
-        <div class="strength-bar" id="strength-bar">
-          <div class="strength-segment" id="seg1"></div>
-          <div class="strength-segment" id="seg2"></div>
-          <div class="strength-segment" id="seg3"></div>
-          <div class="strength-segment" id="seg4"></div>
-          <div class="strength-segment" id="seg5"></div>
-        </div>
-        <div class="strength-label" id="strength-label">Enter new password</div>
+    <div class="form-group">
+      <label class="form-label">New Password</label>
+      <input class="form-control" type="password" name="new_password" id="new-pw"
+        placeholder="New strong password" required oninput="updateStrength(this.value)" />
+      <div class="strength-bar" id="strength-bar">
+        <div class="strength-segment" id="seg1"></div>
+        <div class="strength-segment" id="seg2"></div>
+        <div class="strength-segment" id="seg3"></div>
+        <div class="strength-segment" id="seg4"></div>
+        <div class="strength-segment" id="seg5"></div>
       </div>
+      <div class="strength-label" id="strength-label">Enter new password</div>
+    </div>
 
-      <div class="form-group">
-        <label class="form-label">Confirm New Password</label>
-        <input class="form-control" type="password" name="confirm_password"
-          placeholder="Repeat new password" required />
-      </div>
+    <div class="form-group">
+      <label class="form-label">Confirm New Password</label>
+      <input class="form-control" type="password" name="confirm_password"
+        placeholder="Repeat new password" required />
+    </div>
 
-      <button type="submit" class="btn btn-gradient">🔐 Change Password</button>
-    </form>
-  </div>
+    <button type="submit" class="btn btn-gradient">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+      Change Password
+    </button>
+  </form>
 </div>
 
-<div class="settings-section">
-  <div class="settings-section-header">
-    <div class="settings-section-title">Login Security</div>
+<div class="page-card">
+  <div class="section-header">
+    <div class="section-title">Login Security</div>
   </div>
-  <div class="settings-section-body">
-    <div class="campaign-row">
-      <span class="text-muted text-sm">Failed login attempts</span>
-      <span class="text-sm {{ 'text-error font-bold' if (user.failed_login_attempts or 0) > 0 else '' }}">{{ user.failed_login_attempts or 0 }}</span>
-    </div>
-    <div class="campaign-row">
-      <span class="text-muted text-sm">Account locked</span>
-      <span class="text-sm">{{ 'Yes — until ' + user.locked_until.strftime('%H:%M') if user.locked_until else 'No' }}</span>
-    </div>
-    <div class="campaign-row" style="border-bottom:none;">
-      <span class="text-muted text-sm">Rate limit</span>
-      <span class="text-sm">5 attempts → 15 min lockout</span>
-    </div>
-  </div>
+  <table style="width:100%;border-collapse:collapse;">
+    <tbody>
+      <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+        <td style="padding:0.75rem 0;font-size:0.8rem;color:#64748b;">Failed login attempts</td>
+        <td style="padding:0.75rem 0;font-size:0.8rem;text-align:right;">
+          {% if (user.failed_login_attempts or 0) > 0 %}
+          <span style="color:#f87171;font-weight:700;">{{ user.failed_login_attempts or 0 }}</span>
+          {% else %}
+          <span style="color:#34d399;font-weight:600;">0</span>
+          {% endif %}
+        </td>
+      </tr>
+      <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+        <td style="padding:0.75rem 0;font-size:0.8rem;color:#64748b;">Account locked</td>
+        <td style="padding:0.75rem 0;font-size:0.8rem;text-align:right;">
+          {% if user.locked_until %}
+          <span class="badge badge-red">Locked until {{ user.locked_until.strftime('%H:%M') }}</span>
+          {% else %}
+          <span class="badge badge-green">No</span>
+          {% endif %}
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:0.75rem 0;font-size:0.8rem;color:#64748b;">Rate limit policy</td>
+        <td style="padding:0.75rem 0;font-size:0.8rem;text-align:right;color:#94a3b8;">5 attempts &rarr; 15 min lockout</td>
+      </tr>
+    </tbody>
+  </table>
 </div>
 
 {% elif active_tab == 'danger' %}
 
 <!-- ── Danger Zone ───────────────────────────────────────────── -->
 <div class="danger-zone">
-  <div class="danger-zone-title">⚠ Delete Account</div>
+  <div class="danger-zone-title">Delete Account</div>
   <div class="danger-zone-desc">
     Permanently deactivate your Nexus Mail account. All your templates and campaign history will be removed.
     This action <strong>cannot be undone</strong>.
@@ -242,9 +277,12 @@
       <label class="form-label">Confirm your password to proceed</label>
       <input class="form-control" type="password" name="confirm_password"
         placeholder="Your current password" required
-        style="max-width:320px;background:rgba(239,68,68,0.05);border-color:rgba(239,68,68,0.2);" />
+        style="max-width:360px;background:rgba(239,68,68,0.05) !important;border-color:rgba(239,68,68,0.2) !important;" />
     </div>
-    <button type="submit" class="btn btn-danger">🗑 Delete My Account</button>
+    <button type="submit" class="btn btn-danger">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+      Delete My Account
+    </button>
   </form>
 </div>
 
