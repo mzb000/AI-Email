@@ -124,9 +124,17 @@ def smtp_connection(
 ) -> Iterator[smtplib.SMTP]:
     actual_email = email if email else EMAIL
     actual_password = password if password else PASSWORD
-    server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT, timeout=30)
-    try:
+
+    # Port 465 → SMTP_SSL (implicit TLS), anything else → STARTTLS
+    if int(SMTP_PORT) == 465:
+        server = smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT, timeout=30)
+    else:
+        server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT, timeout=30)
+        server.ehlo()
         server.starttls()
+        server.ehlo()
+
+    try:
         server.login(actual_email, actual_password)
         yield server
     finally:
