@@ -99,7 +99,9 @@ def fetch_recent_emails(limit: int = MAILBOX_FETCH_LIMIT, email_addr: str | None
         messages: List[Dict[str, Any]] = []
 
         for msg_id in reversed(recent_ids):  # newest first
-            status, msg_data = imap.fetch(msg_id, "(RFC822)")
+            # BODY.PEEK[] fetches without marking emails as \Seen (read)
+            # so auto-reply can still find UNSEEN emails after inbox is viewed
+            status, msg_data = imap.fetch(msg_id, "(BODY.PEEK[])")
             if status != "OK" or not msg_data:
                 continue
             raw_msg = msg_data[0][1]
