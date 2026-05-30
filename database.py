@@ -50,6 +50,12 @@ class User(Base):
     campaign_logs = relationship(
         "CampaignLog", back_populates="user", cascade="all, delete-orphan"
     )
+    contacts = relationship(
+        "Contact", back_populates="user", cascade="all, delete-orphan"
+    )
+    scheduled_emails = relationship(
+        "ScheduledEmail", back_populates="user", cascade="all, delete-orphan"
+    )
 
 
 class UserEmailTemplate(Base):
@@ -81,6 +87,39 @@ class CampaignLog(Base):
     user = relationship("User", back_populates="campaign_logs")
 
 
+class Contact(Base):
+    __tablename__ = "contacts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    name = Column(String(100), nullable=False)
+    email = Column(String(200), nullable=False)
+    company = Column(String(100), nullable=True, default="")
+    phone = Column(String(50), nullable=True, default="")
+    list_name = Column(String(100), nullable=True, default="General")
+    notes = Column(Text, nullable=True, default="")
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User", back_populates="contacts")
+
+
+class ScheduledEmail(Base):
+    __tablename__ = "scheduled_emails"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    recipient = Column(String(200), nullable=False)
+    subject = Column(String(300), nullable=False)
+    body = Column(Text, nullable=False)
+    send_at = Column(DateTime, nullable=False)
+    sent = Column(Boolean, default=False)
+    failed = Column(Boolean, default=False)
+    error_msg = Column(String(500), nullable=True, default="")
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User", back_populates="scheduled_emails")
+
+
 def _run_migrations() -> None:
     """Safely add missing columns to existing tables (SQLite ALTER TABLE)."""
     insp = inspect(engine)
@@ -104,6 +143,40 @@ def _run_migrations() -> None:
                 if col not in existing:
                     try:
                         conn.execute(text(f"ALTER TABLE users ADD COLUMN {col} {defn}"))
+                    except Exception:
+                        pass
+            conn.commit()
+
+    # ── contacts table ────────────────────────────────────────────────────────
+    if "contacts" in insp.get_table_names():
+        existing = {c["name"] for c in insp.get_columns("contacts")}
+        new_cols = {
+            "company": "VARCHAR(100) DEFAULT ''",
+            "phone": "VARCHAR(50) DEFAULT ''",
+            "list_name": "VARCHAR(100) DEFAULT 'General'",
+            "notes": "TEXT DEFAULT ''",
+        }
+        with engine.connect() as conn:
+            for col, defn in new_cols.items():
+                if col not in existing:
+                    try:
+                        conn.execute(text(f"ALTER TABLE contacts ADD COLUMN {col} {defn}"))
+                    except Exception:
+                        pass
+            conn.commit()
+
+    # ── scheduled_emails table ────────────────────────────────────────────────
+    if "scheduled_emails" in insp.get_table_names():
+        existing = {c["name"] for c in insp.get_columns("scheduled_emails")}
+        new_cols = {
+            "failed": "BOOLEAN DEFAULT 0",
+            "error_msg": "VARCHAR(500) DEFAULT ''",
+        }
+        with engine.connect() as conn:
+            for col, defn in new_cols.items():
+                if col not in existing:
+                    try:
+                        conn.execute(text(f"ALTER TABLE scheduled_emails ADD COLUMN {col} {defn}"))
                     except Exception:
                         pass
             conn.commit()

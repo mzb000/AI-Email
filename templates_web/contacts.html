@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block title %}Contacts — Nexus Mail{% endblock %}
+
+{% block page_title %}Contacts{% endblock %}
+{% block page_subtitle %}Manage your contact lists{% endblock %}
+
+{% block header_actions %}
+<form method="post" action="/contacts/import" enctype="multipart/form-data" id="import-form" style="display:inline-flex;align-items:center;gap:.5rem;">
+  <label class="btn btn-secondary btn-sm" style="cursor:pointer;">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    Import CSV
+    <input type="file" name="file" accept=".csv" style="display:none;" onchange="document.getElementById('import-form').submit()">
+  </label>
+</form>
+<a href="/contacts/export" class="btn btn-secondary btn-sm">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+  Export CSV
+</a>
+{% endblock %}
+
+{% block content %}
+<!-- Search + filter bar -->
+<div class="page-card" style="padding:1rem 1.5rem;margin-bottom:1rem;">
+  <div class="flex items-center gap-2">
+    <div style="position:relative;flex:1;">
+      <svg style="position:absolute;left:.75rem;top:50%;transform:translateY(-50%);color:#475569;" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="contact-search" class="form-ctrl" placeholder="Search contacts…" style="padding-left:2.25rem;" oninput="filterContacts(this.value)">
+    </div>
+    <span class="text-muted text-sm" id="contact-count">{{ contacts|length }} contact{{ 's' if contacts|length != 1 else '' }}</span>
+  </div>
+</div>
+
+<!-- Contact table -->
+<div class="page-card" style="padding:0;overflow:hidden;">
+  {% if contacts %}
+  <div style="overflow-x:auto;">
+    <table style="width:100%;border-collapse:collapse;" id="contacts-table">
+      <thead>
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+          <th style="padding:.75rem 1.25rem;text-align:left;font-size:.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#475569;">Name</th>
+          <th style="padding:.75rem 1.25rem;text-align:left;font-size:.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#475569;">Email</th>
+          <th style="padding:.75rem 1.25rem;text-align:left;font-size:.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#475569;">Company</th>
+          <th style="padding:.75rem 1.25rem;text-align:left;font-size:.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#475569;">List</th>
+          <th style="padding:.75rem 1.25rem;text-align:left;font-size:.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#475569;">Phone</th>
+          <th style="padding:.75rem 1.25rem;text-align:right;font-size:.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#475569;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in contacts %}
+        <tr class="contact-row" style="border-bottom:1px solid rgba(255,255,255,0.04);transition:background .15s;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background=''">
+          <td style="padding:.75rem 1.25rem;">
+            <div style="display:flex;align-items:center;gap:.625rem;">
+              <div style="width:2rem;height:2rem;border-radius:50%;background:linear-gradient(135deg,#6366f1,#a78bfa);display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;color:#fff;flex-shrink:0;">{{ c.name[0]|upper }}</div>
+              <span style="font-size:.85rem;font-weight:500;color:#e2e8f0;">{{ c.name }}</span>
+            </div>
+          </td>
+          <td style="padding:.75rem 1.25rem;font-size:.8rem;color:#94a3b8;">{{ c.email }}</td>
+          <td style="padding:.75rem 1.25rem;font-size:.8rem;color:#94a3b8;">{{ c.company or '—' }}</td>
+          <td style="padding:.75rem 1.25rem;">
+            <span class="badge badge-blue">{{ c.list_name }}</span>
+          </td>
+          <td style="padding:.75rem 1.25rem;font-size:.8rem;color:#94a3b8;">{{ c.phone or '—' }}</td>
+          <td style="padding:.75rem 1.25rem;text-align:right;">
+            <form method="post" action="/contacts/delete/{{ c.id }}" style="display:inline;" onsubmit="return confirm('Delete {{ c.name }}?')">
+              <button type="submit" class="btn btn-danger btn-sm">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></polyline></svg>
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-icon">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    </div>
+    <div class="empty-title">No contacts yet</div>
+    <div class="empty-desc">Add your first contact below or import a CSV file.</div>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Add Contact Form -->
+<div class="page-card" style="margin-top:1.5rem;">
+  <div class="section-header">
+    <div>
+      <div class="section-title">Add Contact</div>
+      <div class="section-sub">Manually add a new contact to your list</div>
+    </div>
+  </div>
+  <form method="post" action="/contacts/add">
+    <div class="two-col" style="margin-bottom:1rem;">
+      <div class="form-group" style="margin-bottom:0;">
+        <label class="form-label">Name <span style="color:#f87171;">*</span></label>
+        <input type="text" name="name" class="form-ctrl" placeholder="Full name" required>
+      </div>
+      <div class="form-group" style="margin-bottom:0;">
+        <label class="form-label">Email <span style="color:#f87171;">*</span></label>
+        <input type="email" name="email" class="form-ctrl" placeholder="email@example.com" required>
+      </div>
+    </div>
+    <div class="two-col" style="margin-bottom:1rem;">
+      <div class="form-group" style="margin-bottom:0;">
+        <label class="form-label">Company</label>
+        <input type="text" name="company" class="form-ctrl" placeholder="Company name (optional)">
+      </div>
+      <div class="form-group" style="margin-bottom:0;">
+        <label class="form-label">Phone</label>
+        <input type="text" name="phone" class="form-ctrl" placeholder="+1 555 000 0000 (optional)">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">List</label>
+      <select name="list_name" class="form-ctrl">
+        <option value="General">General</option>
+        <option value="Clients">Clients</option>
+        <option value="Newsletter">Newsletter</option>
+        <option value="Leads">Leads</option>
+        <option value="VIP">VIP</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Notes</label>
+      <textarea name="notes" class="form-ctrl" rows="3" placeholder="Optional notes about this contact…"></textarea>
+    </div>
+    <div style="display:flex;justify-content:flex-end;">
+      <button type="submit" class="btn btn-gradient">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Save Contact
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function filterContacts(query) {
+  const q = query.toLowerCase();
+  const rows = document.querySelectorAll('.contact-row');
+  let visible = 0;
+  rows.forEach(row => {
+    const text = row.textContent.toLowerCase();
+    const show = !q || text.includes(q);
+    row.style.display = show ? '' : 'none';
+    if (show) visible++;
+  });
+  const countEl = document.getElementById('contact-count');
+  if (countEl) countEl.textContent = visible + ' contact' + (visible !== 1 ? 's' : '');
+}
+</script>
+{% endblock %}

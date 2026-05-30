@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block title %}Scheduled Emails — Nexus Mail{% endblock %}
+
+{% block page_title %}Scheduled Emails{% endblock %}
+{% block page_subtitle %}Queue emails to send at a future time{% endblock %}
+
+{% block content %}
+
+<!-- Pending section -->
+<div class="page-card" style="padding:0;overflow:hidden;margin-bottom:1.5rem;">
+  <div style="padding:1rem 1.5rem;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:space-between;">
+    <div class="section-title">
+      Pending
+      {% if pending %}
+      <span class="badge badge-yellow" style="margin-left:.5rem;">{{ pending|length }}</span>
+      {% endif %}
+    </div>
+  </div>
+  {% if pending %}
+  <div style="overflow-x:auto;">
+    <table style="width:100%;border-collapse:collapse;">
+      <thead>
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+          <th style="padding:.7rem 1.25rem;text-align:left;font-size:.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#475569;">Recipient</th>
+          <th style="padding:.7rem 1.25rem;text-align:left;font-size:.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#475569;">Subject</th>
+          <th style="padding:.7rem 1.25rem;text-align:left;font-size:.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#475569;">Scheduled For</th>
+          <th style="padding:.7rem 1.25rem;text-align:left;font-size:.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#475569;">Status</th>
+          <th style="padding:.7rem 1.25rem;text-align:right;font-size:.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#475569;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in pending %}
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.04);" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background=''">
+          <td style="padding:.75rem 1.25rem;font-size:.82rem;color:#e2e8f0;">{{ s.recipient }}</td>
+          <td style="padding:.75rem 1.25rem;font-size:.82rem;color:#94a3b8;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ s.subject }}</td>
+          <td style="padding:.75rem 1.25rem;font-size:.8rem;color:#94a3b8;">
+            {{ s.send_at.strftime('%Y-%m-%d %H:%M') if s.send_at else '—' }} <span style="color:#475569;font-size:.72rem;">UTC</span>
+          </td>
+          <td style="padding:.75rem 1.25rem;">
+            <span class="badge badge-yellow">
+              <span class="dot" style="background:#f59e0b;width:5px;height:5px;border-radius:50%;display:inline-block;margin-right:3px;"></span>
+              Pending
+            </span>
+          </td>
+          <td style="padding:.75rem 1.25rem;text-align:right;">
+            <form method="post" action="/scheduled/cancel/{{ s.id }}" style="display:inline;" onsubmit="return confirm('Cancel this scheduled email?')">
+              <button type="submit" class="btn btn-danger btn-sm">Cancel</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state" style="padding:2rem;">
+    <div class="empty-icon">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    </div>
+    <div class="empty-title">No pending emails</div>
+    <div class="empty-desc">Schedule a new email below.</div>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Sent history section -->
+{% if history %}
+<div class="page-card" style="padding:0;overflow:hidden;margin-bottom:1.5rem;">
+  <div style="padding:1rem 1.5rem;border-bottom:1px solid rgba(255,255,255,0.05);">
+    <div class="section-title">Sent History</div>
+  </div>
+  <div style="overflow-x:auto;">
+    <table style="width:100%;border-collapse:collapse;">
+      <thead>
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+          <th style="padding:.7rem 1.25rem;text-align:left;font-size:.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#475569;">Recipient</th>
+          <th style="padding:.7rem 1.25rem;text-align:left;font-size:.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#475569;">Subject</th>
+          <th style="padding:.7rem 1.25rem;text-align:left;font-size:.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#475569;">Scheduled For</th>
+          <th style="padding:.7rem 1.25rem;text-align:left;font-size:.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#475569;">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in history %}
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.04);" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background=''">
+          <td style="padding:.75rem 1.25rem;font-size:.82rem;color:#e2e8f0;">{{ s.recipient }}</td>
+          <td style="padding:.75rem 1.25rem;font-size:.82rem;color:#94a3b8;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ s.subject }}</td>
+          <td style="padding:.75rem 1.25rem;font-size:.8rem;color:#94a3b8;">{{ s.send_at.strftime('%Y-%m-%d %H:%M') if s.send_at else '—' }} UTC</td>
+          <td style="padding:.75rem 1.25rem;">
+            {% if s.sent %}
+            <span class="badge badge-green">Sent</span>
+            {% elif s.failed %}
+            <span class="badge badge-red" title="{{ s.error_msg }}">Failed</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<!-- Schedule New Email Form -->
+<div class="page-card">
+  <div class="section-header">
+    <div>
+      <div class="section-title">Schedule New Email</div>
+      <div class="section-sub">The email will be sent automatically at the specified time (UTC)</div>
+    </div>
+  </div>
+  <form method="post" action="/scheduled/add">
+    <div class="two-col" style="margin-bottom:1rem;">
+      <div class="form-group" style="margin-bottom:0;">
+        <label class="form-label">To (Recipient) <span style="color:#f87171;">*</span></label>
+        <input type="email" name="recipient" class="form-ctrl" placeholder="recipient@example.com" required>
+      </div>
+      <div class="form-group" style="margin-bottom:0;">
+        <label class="form-label">Subject <span style="color:#f87171;">*</span></label>
+        <input type="text" name="subject" class="form-ctrl" placeholder="Email subject" required>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Body <span style="color:#f87171;">*</span></label>
+      <textarea name="body" class="form-ctrl" rows="6" placeholder="Write your email body here…" required></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Send At (UTC) <span style="color:#f87171;">*</span></label>
+      <input type="datetime-local" name="send_at" class="form-ctrl" required>
+      <div class="form-hint">All times are in UTC. The background worker checks every 60 seconds.</div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;">
+      <button type="submit" class="btn btn-gradient">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Schedule Email
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}

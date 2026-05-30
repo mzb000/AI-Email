@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics — Nexus Mail{% endblock %}
+
+{% block page_title %}Analytics & Reports{% endblock %}
+{% block page_subtitle %}Overview of your email campaign performance{% endblock %}
+
+{% block content %}
+
+<!-- Summary stats -->
+<div class="stats-grid" style="margin-bottom:1.5rem;">
+  <div class="stat-card">
+    <div class="stat-icon bg-indigo">
+      <svg class="c-indigo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h18v18H3z" opacity=".2"/><path d="M8 17V9"/><path d="M12 17V5"/><path d="M16 17v-5"/></svg>
+    </div>
+    <div class="stat-value">{{ total_campaigns }}</div>
+    <div class="stat-label">Total Campaigns</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon bg-green">
+      <svg class="c-green" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+    </div>
+    <div class="stat-value">{{ total_sent }}</div>
+    <div class="stat-label">Emails Sent</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon bg-amber">
+      <svg class="c-amber" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    </div>
+    <div class="stat-value">{{ total_failed }}</div>
+    <div class="stat-label">Failed</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon bg-purple">
+      <svg class="c-purple" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    </div>
+    <div class="stat-value">{{ success_rate }}%</div>
+    <div class="stat-label">Success Rate</div>
+  </div>
+</div>
+
+<!-- Campaign history table -->
+<div class="page-card" style="padding:0;overflow:hidden;">
+  <div style="padding:1rem 1.5rem;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:space-between;">
+    <div class="section-title">Campaign History</div>
+    {% if campaigns %}
+    <span class="text-muted text-sm">{{ campaigns|length }} campaign{{ 's' if campaigns|length != 1 else '' }}</span>
+    {% endif %}
+  </div>
+
+  {% if campaigns %}
+  <div style="overflow-x:auto;">
+    <table style="width:100%;border-collapse:collapse;">
+      <thead>
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+          <th style="padding:.7rem 1.25rem;text-align:left;font-size:.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#475569;">Date</th>
+          <th style="padding:.7rem 1.25rem;text-align:left;font-size:.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#475569;">Subject</th>
+          <th style="padding:.7rem 1.25rem;text-align:right;font-size:.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#475569;">Recipients</th>
+          <th style="padding:.7rem 1.25rem;text-align:right;font-size:.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#475569;">Sent</th>
+          <th style="padding:.7rem 1.25rem;text-align:right;font-size:.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#475569;">Failed</th>
+          <th style="padding:.7rem 1.25rem;text-align:left;font-size:.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#475569;">Progress</th>
+          <th style="padding:.7rem 1.25rem;text-align:center;font-size:.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#475569;">Type</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in campaigns %}
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.04);" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background=''">
+          <td style="padding:.75rem 1.25rem;font-size:.78rem;color:#64748b;white-space:nowrap;">
+            {{ c.sent_at.strftime('%b %d, %Y') if c.sent_at else '—' }}<br>
+            <span style="font-size:.7rem;color:#475569;">{{ c.sent_at.strftime('%H:%M') if c.sent_at else '' }} UTC</span>
+          </td>
+          <td style="padding:.75rem 1.25rem;font-size:.83rem;color:#e2e8f0;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ c.subject or '(no subject)' }}</td>
+          <td style="padding:.75rem 1.25rem;text-align:right;font-size:.83rem;color:#94a3b8;">{{ c.recipient_count }}</td>
+          <td style="padding:.75rem 1.25rem;text-align:right;font-size:.83rem;color:#34d399;font-weight:600;">{{ c.success_count }}</td>
+          <td style="padding:.75rem 1.25rem;text-align:right;font-size:.83rem;color:#{{ 'f87171' if c.fail_count else '475569' }};font-weight:{{ '600' if c.fail_count else '400' }};">{{ c.fail_count }}</td>
+          <td style="padding:.75rem 1.25rem;min-width:140px;">
+            <div style="display:flex;gap:2px;height:6px;border-radius:3px;overflow:hidden;background:rgba(255,255,255,0.05);">
+              {% if c.success_pct > 0 %}
+              <div style="width:{{ c.success_pct }}%;background:#10b981;border-radius:3px 0 0 3px;transition:width .3s;"></div>
+              {% endif %}
+              {% if c.fail_pct > 0 %}
+              <div style="width:{{ c.fail_pct }}%;background:#ef4444;{% if c.success_pct == 0 %}border-radius:3px 0 0 3px;{% endif %}{% if c.success_pct + c.fail_pct >= 100 %}border-radius:0 3px 3px 0;{% endif %}"></div>
+              {% endif %}
+            </div>
+            <div style="display:flex;justify-content:space-between;margin-top:3px;">
+              <span style="font-size:.68rem;color:#34d399;">{{ c.success_pct }}%</span>
+              {% if c.fail_pct > 0 %}<span style="font-size:.68rem;color:#f87171;">{{ c.fail_pct }}% fail</span>{% endif %}
+            </div>
+          </td>
+          <td style="padding:.75rem 1.25rem;text-align:center;">
+            {% if c.dry_run %}
+            <span class="badge badge-blue">Dry Run</span>
+            {% else %}
+            <span class="badge badge-green">Real</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state" style="padding:3rem;">
+    <div class="empty-icon">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+    </div>
+    <div class="empty-title">No campaign data yet</div>
+    <div class="empty-desc">Send your first campaign from the <a href="/compose">Compose</a> page to see analytics here.</div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

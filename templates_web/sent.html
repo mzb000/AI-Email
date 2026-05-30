@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Sent Campaigns — Nexus Mail{% endblock %}
+
+{% block page_title %}Sent Campaigns{% endblock %}
+{% block page_subtitle %}All outgoing email campaigns{% endblock %}
+
+{% block header_actions %}
+{% if campaigns %}
+<span class="badge badge-green" style="font-size:.8rem;padding:.3rem .8rem;">
+  {{ total_sent }} email{{ 's' if total_sent != 1 else '' }} sent
+</span>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="page-card" style="padding:0;overflow:hidden;">
+  <div style="padding:1rem 1.5rem;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:space-between;">
+    <div class="section-title">Campaign Log</div>
+    {% if campaigns %}
+    <span class="text-muted text-sm">{{ campaigns|length }} campaign{{ 's' if campaigns|length != 1 else '' }}</span>
+    {% endif %}
+  </div>
+
+  {% if campaigns %}
+  <div style="overflow-x:auto;">
+    <table style="width:100%;border-collapse:collapse;">
+      <thead>
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+          <th style="padding:.7rem 1.25rem;text-align:left;font-size:.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#475569;">Date</th>
+          <th style="padding:.7rem 1.25rem;text-align:left;font-size:.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#475569;">Subject</th>
+          <th style="padding:.7rem 1.25rem;text-align:right;font-size:.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#475569;">Recipients</th>
+          <th style="padding:.7rem 1.25rem;text-align:right;font-size:.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#475569;">Sent</th>
+          <th style="padding:.7rem 1.25rem;text-align:right;font-size:.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#475569;">Failed</th>
+          <th style="padding:.7rem 1.25rem;text-align:center;font-size:.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#475569;">Type</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in campaigns %}
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.04);" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background=''">
+          <td style="padding:.75rem 1.25rem;font-size:.78rem;color:#64748b;white-space:nowrap;">
+            {{ c.sent_at.strftime('%b %d, %Y') if c.sent_at else '—' }}<br>
+            <span style="font-size:.7rem;color:#475569;">{{ c.sent_at.strftime('%H:%M') if c.sent_at else '' }} UTC</span>
+          </td>
+          <td style="padding:.75rem 1.25rem;font-size:.83rem;color:#e2e8f0;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ c.subject or '(no subject)' }}</td>
+          <td style="padding:.75rem 1.25rem;text-align:right;font-size:.83rem;color:#94a3b8;">{{ c.recipient_count }}</td>
+          <td style="padding:.75rem 1.25rem;text-align:right;">
+            <span style="font-size:.83rem;font-weight:600;color:#34d399;">{{ c.success_count }}</span>
+          </td>
+          <td style="padding:.75rem 1.25rem;text-align:right;">
+            {% if c.fail_count %}
+            <span style="font-size:.83rem;font-weight:600;color:#f87171;">{{ c.fail_count }}</span>
+            {% else %}
+            <span style="font-size:.83rem;color:#475569;">0</span>
+            {% endif %}
+          </td>
+          <td style="padding:.75rem 1.25rem;text-align:center;">
+            {% if c.dry_run %}
+            <span class="badge badge-blue">Dry Run</span>
+            {% else %}
+            <span class="badge badge-green">Real</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state" style="padding:3rem;">
+    <div class="empty-icon">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+    </div>
+    <div class="empty-title">No campaigns sent yet</div>
+    <div class="empty-desc">Head to <a href="/compose">Compose</a> to send your first campaign.</div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

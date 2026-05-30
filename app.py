@@ -1,9 +1,14 @@
 from __future__ import annotations
 
+import csv
 import imaplib
+import io
 import json as _json
 import smtplib
+import threading
+import time as _time
 from datetime import datetime
+from email.mime.text import MIMEText
 from email.utils import parseaddr
 from pathlib import Path
 import re
@@ -11,7 +16,7 @@ from threading import Lock
 from typing import List
 
 from fastapi import FastAPI, File, Form, Request, UploadFile
-from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from jinja2 import Environment, FileSystemLoader
 from starlette import status
@@ -31,7 +36,7 @@ from auth import (
     LOCKOUT_MINUTES,
     MAX_ATTEMPTS,
 )
-from database import CampaignLog, SessionLocal, User, UserEmailTemplate, seed_owner_account
+from database import CampaignLog, Contact, ScheduledEmail, SessionLocal, User, UserEmailTemplate, seed_owner_account
 from config import (
     AUTO_REPLY_POLL_INTERVAL,
     AUTO_REPLY_SEARCH_CRITERIA,
@@ -1093,3 +1098,449 @@ async def suggest_draft(request: Request, q: str = ""):
         for sc, d in scored if sc > 0
     ][:5]
     return JSONResponse({"items": results})
+
+
+# ── Scheduled email background worker ────────────────────────────────────────
+
+def _scheduled_email_worker():
+    while True:
+        try:
+            db = SessionLocal()
+            now = datetime.utcnow()
+            pending = db.query(ScheduledEmail).filter(
+                ScheduledEmail.sent == False,
+                ScheduledEmail.failed == False,
+                ScheduledEmail.send_at <= now,
+            ).all()
+            for sched in pending:
+                user = db.query(User).filter(User.id == sched.user_id).first()
+                if not user or not user.gmail_address or not user.gmail_app_password:
+                    continue
+                try:
+                    msg = MIMEText(sched.body)
+                    msg["Subject"] = sched.subject
+                    msg["From"] = user.gmail_address
+                    msg["To"] = sched.recipient
+                    with smtplib.SMTP(user.smtp_server or "smtp.gmail.com", user.smtp_port or 587) as s:
+                        s.starttls()
+                        s.login(user.gmail_address, user.gmail_app_password)
+                        s.send_message(msg)
+                    sched.sent = True
+                except Exception as e:
+                    sched.failed = True
+                    sched.error_msg = str(e)[:500]
+            db.commit()
+        except Exception:
+            pass
+        finally:
+            try:
+                db.close()
+            except Exception:
+                pass
+        _time.sleep(60)
+
+
+@app.on_event("startup")
+async def start_scheduler():
+    t = threading.Thread(target=_scheduled_email_worker, daemon=True)
+    t.start()
+
+
+# ── Contacts routes ───────────────────────────────────────────────────────────
+
+@app.get("/contacts")
+async def contacts_page(request: Request):
+    user, redir = _require_auth(request)
+    if redir:
+        return redir
+
+    ud = _get_user_data(user.id)
+    flash = _consume_flash(ud)
+
+    db = SessionLocal()
+    try:
+        contacts = db.query(Contact).filter(
+            Contact.user_id == user.id
+        ).order_by(Contact.created_at.desc()).all()
+        contacts_data = [
+            {
+                "id": c.id,
+                "name": c.name,
+                "email": c.email,
+                "company": c.company or "",
+                "phone": c.phone or "",
+                "list_name": c.list_name or "General",
+                "notes": c.notes or "",
+                "created_at": c.created_at,
+            }
+            for c in contacts
+        ]
+    finally:
+        db.close()
+
+    return _render("contacts.html", {
+        "request": request,
+        "user": user,
+        "active": "contacts",
+        "flash": flash,
+        "contacts": contacts_data,
+    })
+
+
+@app.post("/contacts/add")
+async def contacts_add(
+    request: Request,
+    name: str = Form(...),
+    email: str = Form(...),
+    company: str = Form(""),
+    phone: str = Form(""),
+    list_name: str = Form("General"),
+    notes: str = Form(""),
+):
+    user, redir = _require_auth(request)
+    if redir:
+        return redir
+
+    ud = _get_user_data(user.id)
+    email = email.strip().lower()
+    if not email or not _EMAIL_RE.fullmatch(email):
+        _set_flash(ud, "Invalid email address.", "error")
+        return _redirect("/contacts")
+
+    db = SessionLocal()
+    try:
+        contact = Contact(
+            user_id=user.id,
+            name=name.strip(),
+            email=email,
+            company=company.strip(),
+            phone=phone.strip(),
+            list_name=list_name.strip() or "General",
+            notes=notes.strip(),
+        )
+        db.add(contact)
+        db.commit()
+    finally:
+        db.close()
+
+    _set_flash(ud, f"Contact '{name.strip()}' added successfully.", "success")
+    return _redirect("/contacts")
+
+
+@app.post("/contacts/delete/{cid}")
+async def contacts_delete(request: Request, cid: int):
+    user, redir = _require_auth(request)
+    if redir:
+        return redir
+
+    ud = _get_user_data(user.id)
+    db = SessionLocal()
+    try:
+        contact = db.query(Contact).filter(
+            Contact.id == cid, Contact.user_id == user.id
+        ).first()
+        if contact:
+            db.delete(contact)
+            db.commit()
+            _set_flash(ud, "Contact deleted.", "success")
+        else:
+            _set_flash(ud, "Contact not found.", "error")
+    finally:
+        db.close()
+
+    return _redirect("/contacts")
+
+
+@app.post("/contacts/import")
+async def contacts_import(request: Request, file: UploadFile = File(...)):
+    user, redir = _require_auth(request)
+    if redir:
+        return redir
+
+    ud = _get_user_data(user.id)
+    contents = await file.read()
+    try:
+        text_data = contents.decode("utf-8-sig")
+    except Exception:
+        text_data = contents.decode("latin-1", errors="replace")
+
+    reader = csv.DictReader(io.StringIO(text_data))
+    added = 0
+    skipped = 0
+    db = SessionLocal()
+    try:
+        for row in reader:
+            # Normalize header names (case-insensitive)
+            row_lower = {k.strip().lower(): v for k, v in row.items()}
+            email_val = (row_lower.get("email") or "").strip().lower()
+            name_val = (row_lower.get("name") or row_lower.get("full name") or row_lower.get("fullname") or "").strip()
+            if not email_val or not _EMAIL_RE.fullmatch(email_val):
+                skipped += 1
+                continue
+            if not name_val:
+                name_val = email_val.split("@")[0]
+            contact = Contact(
+                user_id=user.id,
+                name=name_val,
+                email=email_val,
+                company=(row_lower.get("company") or "").strip(),
+                phone=(row_lower.get("phone") or row_lower.get("phone number") or "").strip(),
+                list_name=(row_lower.get("list") or row_lower.get("list_name") or "General").strip() or "General",
+                notes=(row_lower.get("notes") or "").strip(),
+            )
+            db.add(contact)
+            added += 1
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        _set_flash(ud, f"Import failed: {e}", "error")
+        return _redirect("/contacts")
+    finally:
+        db.close()
+
+    _set_flash(ud, f"Imported {added} contact(s). {skipped} row(s) skipped.", "success")
+    return _redirect("/contacts")
+
+
+@app.get("/contacts/export")
+async def contacts_export(request: Request):
+    user, redir = _require_auth(request)
+    if redir:
+        return redir
+
+    db = SessionLocal()
+    try:
+        contacts = db.query(Contact).filter(Contact.user_id == user.id).all()
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow(["name", "email", "company", "phone", "list_name", "notes"])
+        for c in contacts:
+            writer.writerow([c.name, c.email, c.company or "", c.phone or "", c.list_name or "General", c.notes or ""])
+        csv_bytes = output.getvalue().encode("utf-8")
+    finally:
+        db.close()
+
+    return StreamingResponse(
+        io.BytesIO(csv_bytes),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=contacts.csv"},
+    )
+
+
+# ── Scheduled Emails routes ───────────────────────────────────────────────────
+
+@app.get("/scheduled")
+async def scheduled_page(request: Request):
+    user, redir = _require_auth(request)
+    if redir:
+        return redir
+
+    ud = _get_user_data(user.id)
+    flash = _consume_flash(ud)
+
+    db = SessionLocal()
+    try:
+        pending = db.query(ScheduledEmail).filter(
+            ScheduledEmail.user_id == user.id,
+            ScheduledEmail.sent == False,
+            ScheduledEmail.failed == False,
+        ).order_by(ScheduledEmail.send_at.asc()).all()
+        history = db.query(ScheduledEmail).filter(
+            ScheduledEmail.user_id == user.id,
+            (ScheduledEmail.sent == True) | (ScheduledEmail.failed == True),
+        ).order_by(ScheduledEmail.send_at.desc()).limit(50).all()
+
+        def _sched_dict(s):
+            return {
+                "id": s.id,
+                "recipient": s.recipient,
+                "subject": s.subject,
+                "body": s.body,
+                "send_at": s.send_at,
+                "sent": s.sent,
+                "failed": s.failed,
+                "error_msg": s.error_msg or "",
+                "created_at": s.created_at,
+            }
+
+        pending_data = [_sched_dict(s) for s in pending]
+        history_data = [_sched_dict(s) for s in history]
+    finally:
+        db.close()
+
+    return _render("scheduled.html", {
+        "request": request,
+        "user": user,
+        "active": "scheduled",
+        "flash": flash,
+        "pending": pending_data,
+        "history": history_data,
+    })
+
+
+@app.post("/scheduled/add")
+async def scheduled_add(
+    request: Request,
+    recipient: str = Form(...),
+    subject: str = Form(...),
+    body: str = Form(...),
+    send_at: str = Form(...),
+):
+    user, redir = _require_auth(request)
+    if redir:
+        return redir
+
+    ud = _get_user_data(user.id)
+    recipient = recipient.strip().lower()
+    if not recipient or not _EMAIL_RE.fullmatch(recipient):
+        _set_flash(ud, "Invalid recipient email address.", "error")
+        return _redirect("/scheduled")
+
+    try:
+        send_at_dt = datetime.fromisoformat(send_at)
+    except Exception:
+        _set_flash(ud, "Invalid date/time format.", "error")
+        return _redirect("/scheduled")
+
+    if send_at_dt <= datetime.utcnow():
+        _set_flash(ud, "Scheduled time must be in the future.", "error")
+        return _redirect("/scheduled")
+
+    db = SessionLocal()
+    try:
+        sched = ScheduledEmail(
+            user_id=user.id,
+            recipient=recipient,
+            subject=subject.strip(),
+            body=body.strip(),
+            send_at=send_at_dt,
+        )
+        db.add(sched)
+        db.commit()
+    finally:
+        db.close()
+
+    _set_flash(ud, f"Email scheduled for {send_at_dt.strftime('%Y-%m-%d %H:%M')} UTC.", "success")
+    return _redirect("/scheduled")
+
+
+@app.post("/scheduled/cancel/{sid}")
+async def scheduled_cancel(request: Request, sid: int):
+    user, redir = _require_auth(request)
+    if redir:
+        return redir
+
+    ud = _get_user_data(user.id)
+    db = SessionLocal()
+    try:
+        sched = db.query(ScheduledEmail).filter(
+            ScheduledEmail.id == sid,
+            ScheduledEmail.user_id == user.id,
+            ScheduledEmail.sent == False,
+            ScheduledEmail.failed == False,
+        ).first()
+        if sched:
+            db.delete(sched)
+            db.commit()
+            _set_flash(ud, "Scheduled email cancelled.", "success")
+        else:
+            _set_flash(ud, "Scheduled email not found or already sent.", "error")
+    finally:
+        db.close()
+
+    return _redirect("/scheduled")
+
+
+# ── Analytics route ───────────────────────────────────────────────────────────
+
+@app.get("/analytics")
+async def analytics_page(request: Request):
+    user, redir = _require_auth(request)
+    if redir:
+        return redir
+
+    ud = _get_user_data(user.id)
+    flash = _consume_flash(ud)
+
+    db = SessionLocal()
+    try:
+        campaigns = db.query(CampaignLog).filter(
+            CampaignLog.user_id == user.id,
+        ).order_by(CampaignLog.sent_at.desc()).all()
+
+        total_campaigns = len(campaigns)
+        total_sent = sum(c.success_count or 0 for c in campaigns)
+        total_failed = sum(c.fail_count or 0 for c in campaigns)
+        total_recipients = sum(c.recipient_count or 0 for c in campaigns)
+        success_rate = round(total_sent / total_recipients * 100, 1) if total_recipients else 0.0
+
+        campaigns_data = []
+        for c in campaigns:
+            rc = c.recipient_count or 1
+            campaigns_data.append({
+                "id": c.id,
+                "subject": c.subject,
+                "recipient_count": c.recipient_count or 0,
+                "success_count": c.success_count or 0,
+                "fail_count": c.fail_count or 0,
+                "dry_run": c.dry_run,
+                "sent_at": c.sent_at,
+                "success_pct": round((c.success_count or 0) / rc * 100),
+                "fail_pct": round((c.fail_count or 0) / rc * 100),
+            })
+    finally:
+        db.close()
+
+    return _render("analytics.html", {
+        "request": request,
+        "user": user,
+        "active": "analytics",
+        "flash": flash,
+        "campaigns": campaigns_data,
+        "total_campaigns": total_campaigns,
+        "total_sent": total_sent,
+        "total_failed": total_failed,
+        "success_rate": success_rate,
+    })
+
+
+# ── Sent Mail route ───────────────────────────────────────────────────────────
+
+@app.get("/sent")
+async def sent_page(request: Request):
+    user, redir = _require_auth(request)
+    if redir:
+        return redir
+
+    ud = _get_user_data(user.id)
+    flash = _consume_flash(ud)
+
+    db = SessionLocal()
+    try:
+        campaigns = db.query(CampaignLog).filter(
+            CampaignLog.user_id == user.id,
+        ).order_by(CampaignLog.sent_at.desc()).all()
+        total_sent = sum(c.success_count or 0 for c in campaigns)
+        campaigns_data = [
+            {
+                "id": c.id,
+                "subject": c.subject,
+                "recipient_count": c.recipient_count or 0,
+                "success_count": c.success_count or 0,
+                "fail_count": c.fail_count or 0,
+                "dry_run": c.dry_run,
+                "sent_at": c.sent_at,
+            }
+            for c in campaigns
+        ]
+    finally:
+        db.close()
+
+    return _render("sent.html", {
+        "request": request,
+        "user": user,
+        "active": "sent",
+        "flash": flash,
+        "campaigns": campaigns_data,
+        "total_sent": total_sent,
+    })
