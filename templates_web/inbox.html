@@ -5,79 +5,101 @@
 {% block page_subtitle %}{{ mailbox | length }} email(s) loaded{% endblock %}
 
 {% block header_actions %}
-<form method="get" action="/inbox" style="display:flex;gap:0.5rem;">
+<form method="get" action="/inbox" style="display:flex;gap:.5rem;align-items:center;">
   <input class="form-control" type="search" name="q" value="{{ query }}"
-    placeholder="Search emails…" style="width:220px;" />
+    placeholder="Search emails…" style="width:240px;" />
   <button type="submit" class="btn btn-secondary btn-sm">Search</button>
   {% if query %}<a href="/inbox" class="btn btn-ghost btn-sm">✕ Clear</a>{% endif %}
 </form>
-<button onclick="refreshInbox(this)" class="btn btn-secondary btn-sm" style="margin-left:0.25rem;">
-  🔄 Refresh
+<button onclick="refreshInbox(this)" class="btn btn-secondary btn-sm">
+  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-right:4px;vertical-align:middle"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>Refresh
 </button>
+{% endblock %}
+
+{% block styles %}
+<style>
+.inbox-shell{display:grid;grid-template-columns:380px 1fr;height:calc(100vh - 88px);border:1px solid var(--border);border-radius:16px;overflow:hidden;background:var(--card)}
+.ilist{overflow-y:auto;overflow-x:hidden;border-right:1px solid var(--border)}
+.ilist::-webkit-scrollbar{width:3px}.ilist::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+.irow{display:flex;align-items:flex-start;gap:.75rem;padding:.875rem 1rem;border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s;user-select:none}
+.irow:hover{background:rgba(99,102,241,.06)}
+.irow.active{background:rgba(99,102,241,.12);border-left:3px solid var(--primary);padding-left:calc(1rem - 3px)}
+.irow-av{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#a78bfa);display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;color:#fff;flex-shrink:0;text-transform:uppercase}
+.irow-body{flex:1;min-width:0}
+.irow-top{display:flex;align-items:center;justify-content:space-between;gap:.4rem;margin-bottom:.2rem}
+.irow-from{font-size:.8rem;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px}
+.irow-time{font-size:.68rem;color:var(--muted-2);white-space:nowrap;flex-shrink:0}
+.irow-subject{font-size:.775rem;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:.18rem;font-weight:500}
+.irow-snip{font-size:.72rem;color:var(--muted-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.iviewer{display:flex;flex-direction:column;overflow:hidden}
+.iviewer-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--muted-2);gap:.5rem}
+.iv-head{padding:1.5rem 1.75rem 1rem;border-bottom:1px solid var(--border);flex-shrink:0}
+.iv-subject{font-size:1.1rem;font-weight:700;color:var(--text);margin-bottom:.6rem;line-height:1.3}
+.iv-from{font-size:.825rem;color:var(--text-2);margin-bottom:.2rem}
+.iv-date{font-size:.76rem;color:var(--muted-2)}
+.iv-body{flex:1;overflow-y:auto;padding:1.25rem 1.75rem;font-size:.85rem;color:var(--text-2);line-height:1.8;white-space:pre-wrap;word-break:break-word;font-family:inherit}
+.iv-body::-webkit-scrollbar{width:3px}.iv-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+.iv-foot{padding:.875rem 1.75rem;border-top:1px solid var(--border);display:flex;gap:.6rem;flex-shrink:0}
+</style>
 {% endblock %}
 
 {% block content %}
 
 {% if error_msg %}
-<div class="alert alert-error">
+<div class="alert alert-error" style="margin-bottom:1rem;">
   <strong>IMAP Error:</strong> {{ error_msg }}
-  — <a href="/settings?tab=gmail" style="color:#fca5a5;">Check your Gmail credentials</a>
+  — <a href="/settings?tab=gmail" style="color:#fca5a5;">Check credentials</a>
 </div>
 {% endif %}
 
 {% if mailbox %}
-<div class="inbox-layout">
-  <!-- Email list -->
-  <div class="email-list" id="email-list">
+
+<!-- Email data passed as JS variable (</script> safely escaped by tojson filter) -->
+<script>window._INBOX = {{ mailbox | tojson }};</script>
+
+<div class="inbox-shell">
+
+  <!-- Left: email list -->
+  <div class="ilist" id="ilist">
     {% for msg in mailbox %}
-    <article class="email-card"
-      data-payload='{{ {
-        "subject": msg.subject or "(No subject)",
-        "from": msg["from"],
-        "dateShort": msg.date_short or msg.date,
-        "dateFull": msg.date_full or msg.date,
-        "dateIso": msg.date_iso,
-        "body": msg.body
-      } | tojson | e }}'>
-      <div class="email-avatar">{{ msg["from"][:2] | upper }}</div>
-      <div class="email-info">
-        <div class="email-from">{{ msg["from"][:45] }}</div>
-        <div class="email-subject">{{ msg.subject or "(No subject)" }}</div>
-        <div class="email-snippet">{{ msg.body[:90] }}{% if msg.body | length > 90 %}…{% endif %}</div>
+    <div class="irow {% if loop.first %}active{% endif %}" data-idx="{{ loop.index0 }}">
+      <div class="irow-av">{{ (msg['from'] or '?')[:2] | upper }}</div>
+      <div class="irow-body">
+        <div class="irow-top">
+          <span class="irow-from">{{ (msg['from'] or '').split('<')[0].strip() or msg['from'] }}</span>
+          <span class="irow-time">
+            {% if msg.date_short %}{{ msg.date_short.split('·')[0].strip() if '·' in msg.date_short else msg.date_short.split(' ')[0] + ' ' + msg.date_short.split(' ')[1] if msg.date_short.split(' ')|length > 1 else msg.date_short }}{% endif %}
+          </span>
+        </div>
+        <div class="irow-subject">{{ msg.subject or '(No subject)' }}</div>
+        <div class="irow-snip">{{ (msg.body or '')[:80] }}</div>
       </div>
-      <div class="email-meta">
-        <span class="email-time">{{ msg.date_short or '' }}</span>
-      </div>
-    </article>
+    </div>
     {% endfor %}
   </div>
 
-  <!-- Email viewer -->
-  <div class="email-viewer" id="email-viewer">
-    <div class="viewer-empty">
-      <div class="viewer-empty-icon">✉</div>
-      <div class="empty-title">Select an email</div>
-      <div class="empty-desc">Click any email on the left to read it here.</div>
+  <!-- Right: email viewer -->
+  <div class="iviewer" id="iviewer">
+    <div class="iviewer-empty" id="viewer-empty">
+      <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+      <p style="font-size:.875rem;">Select an email to read</p>
     </div>
   </div>
+
 </div>
 
 {% else %}
-<div class="empty-state" style="min-height:400px;">
-  <div class="empty-icon">📭</div>
-  <div class="empty-title">
+<div class="empty-state" style="min-height:420px;">
+  <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24" opacity=".2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+  <div class="empty-title" style="margin-top:1rem;">
     {% if query %}No emails matching "{{ query }}"{% else %}Inbox is empty{% endif %}
   </div>
   <div class="empty-desc">
-    {% if query %}
-      Try a different search term.
-    {% elif not user.gmail_address %}
-      <a href="/settings?tab=gmail">Connect your Gmail account</a> to see your inbox.
-    {% else %}
-      No emails to show yet.
-    {% endif %}
+    {% if query %}Try a different search term.
+    {% elif not user.gmail_address %}<a href="/settings?tab=gmail">Connect your Gmail account</a> to see your inbox.
+    {% else %}No emails to show yet.{% endif %}
   </div>
-  {% if query %}<a href="/inbox" class="btn btn-ghost btn-sm">Clear search</a>{% endif %}
+  {% if query %}<a href="/inbox" class="btn btn-ghost btn-sm" style="margin-top:1rem;">Clear search</a>{% endif %}
 </div>
 {% endif %}
 
@@ -85,57 +107,78 @@
 
 {% block scripts %}
 <script>
-// Email viewer
-(function() {
-  const cards  = document.querySelectorAll('.email-card');
-  const viewer = document.getElementById('email-viewer');
-  if (!cards.length || !viewer) return;
+(function () {
+  var emails = window._INBOX || [];
+  if (!emails.length) return;
 
-  cards.forEach(card => {
-    card.addEventListener('click', () => {
-      cards.forEach(c => c.classList.remove('active'));
-      card.classList.add('active');
-      let p = {};
-      try { p = JSON.parse(card.dataset.payload || '{}'); } catch {}
-      const { subject, from, dateFull, dateShort, body } = p;
-      const safeBody = (body || '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-      viewer.innerHTML = `
-        <div class="viewer-header">
-          <div class="viewer-subject">${subject || '(No subject)'}</div>
-          <div class="viewer-from">From: ${from || ''}</div>
-          <div class="viewer-date">${dateFull || dateShort || ''}</div>
-        </div>
-        <div class="viewer-body">${safeBody}</div>
-        <div class="viewer-actions">
-          <a href="/compose?to=${encodeURIComponent(from||'')}&subject=${encodeURIComponent('Re: '+(subject||''))}"
-             class="btn btn-secondary btn-sm">↩ Reply</a>
-          <a href="/compose?subject=${encodeURIComponent('Fwd: '+(subject||''))}"
-             class="btn btn-ghost btn-sm">⤴ Forward</a>
-        </div>
-      `;
+  var rows   = document.querySelectorAll('.irow');
+  var viewer = document.getElementById('iviewer');
+  if (!rows.length || !viewer) return;
+
+  function escHtml(s) {
+    return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function showEmail(idx) {
+    var msg = emails[idx];
+    if (!msg) return;
+
+    rows.forEach(function(r){ r.classList.remove('active'); });
+    rows[idx].classList.add('active');
+
+    var subject = msg.subject || '(No subject)';
+    var from    = msg['from'] || '';
+    var date    = msg.date_full || msg.date_short || msg.date || '';
+    var body    = msg.body || '';
+
+    // Strip HTML tags from body for clean text display
+    var cleanBody = body.replace(/<[^>]*>/g, ' ').replace(/[ \t]+/g,' ').trim();
+
+    var replyTo   = encodeURIComponent(from);
+    var replySubj = encodeURIComponent('Re: ' + subject);
+    var fwdSubj   = encodeURIComponent('Fwd: ' + subject);
+
+    viewer.innerHTML =
+      '<div class="iv-head">' +
+        '<div class="iv-subject">' + escHtml(subject) + '</div>' +
+        '<div class="iv-from"><strong>From:</strong> ' + escHtml(from) + '</div>' +
+        '<div class="iv-date">' + escHtml(date) + '</div>' +
+      '</div>' +
+      '<div class="iv-body">' + escHtml(cleanBody) + '</div>' +
+      '<div class="iv-foot">' +
+        '<a href="/compose?to=' + replyTo + '&subject=' + replySubj + '" class="btn btn-primary btn-sm">↩ Reply</a>' +
+        '<a href="/compose?subject=' + fwdSubj + '" class="btn btn-ghost btn-sm">⤴ Forward</a>' +
+      '</div>';
+  }
+
+  // Attach click handlers
+  rows.forEach(function(row) {
+    row.addEventListener('click', function() {
+      showEmail(parseInt(row.dataset.idx, 10));
     });
   });
+
+  // Show first email on load
+  showEmail(0);
 })();
 
 // Refresh inbox
-async function refreshInbox(btn) {
-  const orig = btn.innerHTML;
-  btn.innerHTML = '<span class="spinner"></span>';
+function refreshInbox(btn) {
+  var orig = btn.innerHTML;
+  btn.innerHTML = '<span class="spinner" style="width:13px;height:13px;margin-right:4px;vertical-align:middle;"></span>Refreshing…';
   btn.disabled = true;
-  try {
-    const res  = await fetch('/inbox/refresh', { method: 'POST' });
-    const data = await res.json();
-    if (data.ok) {
-      btn.innerHTML = '✓ Refreshed';
-      setTimeout(() => location.reload(), 600);
-    } else {
-      btn.innerHTML = '✕ ' + (data.error || 'Error');
-      setTimeout(() => { btn.innerHTML = orig; btn.disabled = false; }, 2000);
-    }
-  } catch {
-    btn.innerHTML = orig;
-    btn.disabled = false;
-  }
+  fetch('/inbox/refresh', { method: 'POST' })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (d.ok) {
+        btn.innerHTML = '✓ Done';
+        setTimeout(function(){ location.reload(); }, 500);
+      } else {
+        btn.innerHTML = '✕ ' + (d.error || 'Error');
+        setTimeout(function(){ btn.innerHTML = orig; btn.disabled = false; }, 2500);
+      }
+    })
+    .catch(function(){ btn.innerHTML = orig; btn.disabled = false; });
 }
 </script>
 {% endblock %}

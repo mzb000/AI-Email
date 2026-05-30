@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from datetime import datetime
 from sqlalchemy import (
     Boolean, Column, DateTime, ForeignKey, Integer, String, Text,
@@ -7,7 +8,8 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import DeclarativeBase, relationship, sessionmaker
 
-DATABASE_URL = "sqlite:///./users.db"
+# Allow overriding the DB path via env var (useful for Railway volume mounts)
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./users.db")
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
