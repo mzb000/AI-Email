@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import smtplib
+import socket
+import ssl
 import time
 from contextlib import contextmanager
 from dataclasses import dataclass
@@ -17,6 +19,31 @@ from config import (
     SMTP_PORT,
     SMTP_SERVER,
 )
+
+
+# ── IPv4-forced SMTP classes ──────────────────────────────────────────────────
+# Railway (and some cloud providers) have broken IPv6 routing to smtp.gmail.com
+# which causes ENETUNREACH. Force IPv4 by overriding _get_socket.
+
+class _SMTP4(smtplib.SMTP):
+    """SMTP that always connects over IPv4."""
+    def _get_socket(self, host, port, timeout):
+        ip = socket.gethostbyname(host)          # resolves to IPv4
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(timeout)
+        sock.connect((ip, port))
+        return sock
+
+
+class _SMTP4_SSL(smtplib.SMTP_SSL):
+    """SMTP_SSL that always connects over IPv4."""
+    def _get_socket(self, host, port, timeout):
+        ip = socket.gethostbyname(host)
+        raw = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        raw.settimeout(timeout)
+        raw.connect((ip, port))
+        ctx = self.context if hasattr(self, 'context') and self.context else ssl.create_default_context()
+        return ctx.wrap_socket(raw, server_hostname=host)
 
 
 @dataclass
@@ -125,11 +152,15 @@ def smtp_connection(
     actual_email = email if email else EMAIL
     actual_password = password if password else PASSWORD
 
-    # Port 465 → SMTP_SSL (implicit TLS), anything else → STARTTLS
-    if int(SMTP_PORT) == 465:
-        server = smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT, timeout=30)
+    port = int(SMTP_PORT)
+
+    # Use IPv4-forced subclasses to avoid ENETUNREACH on Railway (IPv6 issue)
+    if port == 465:
+        # Implicit SSL (SMTPS)
+        server = _SMTP4_SSL(SMTP_SERVER, port, timeout=30)
     else:
-        server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT, timeout=30)
+        # STARTTLS (port 587 or 25)
+        server = _SMTP4(SMTP_SERVER, port, timeout=30)
         server.ehlo()
         server.starttls()
         server.ehlo()
