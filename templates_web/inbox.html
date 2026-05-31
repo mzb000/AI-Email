@@ -194,7 +194,7 @@
   // Show first email on load
   if (emails.length) showEmail(0);
 
-  // ── Auto-refresh every 30 seconds from cache (no IMAP hit) ──────────────────
+  // ── Auto-refresh every 10 seconds from cache (no IMAP hit) ──────────────────
   var _newBanner = null;
   setInterval(function() {
     fetch('/inbox/data')
@@ -217,7 +217,7 @@
         }
       })
       .catch(function(){});
-  }, 30000);
+  }, 10000);
 
 })();
 
