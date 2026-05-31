@@ -1146,6 +1146,8 @@ def _scheduled_email_worker():
 
 @app.on_event("startup")
 async def start_scheduler():
+    import logging
+    logging.getLogger("uvicorn").info("NexusMail v2 startup — SMTP fixed build [port-465-ssl]")
     t = threading.Thread(target=_scheduled_email_worker, daemon=True)
     t.start()
 
