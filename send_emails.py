@@ -152,18 +152,10 @@ def smtp_connection(
     actual_email = email if email else EMAIL
     actual_password = password if password else PASSWORD
 
-    port = int(SMTP_PORT)
-
-    # Use IPv4-forced subclasses to avoid ENETUNREACH on Railway (IPv6 issue)
-    if port == 465:
-        # Implicit SSL (SMTPS)
-        server = _SMTP4_SSL(SMTP_SERVER, port, timeout=30)
-    else:
-        # STARTTLS (port 587 or 25)
-        server = _SMTP4(SMTP_SERVER, port, timeout=30)
-        server.ehlo()
-        server.starttls()
-        server.ehlo()
+    # Always use port 465 (SMTPS / implicit SSL) — most reliable on cloud platforms.
+    # Port 587 (STARTTLS) is often blocked or filtered. Port 465 works everywhere.
+    smtp_port = 465
+    server = _SMTP4_SSL(SMTP_SERVER, smtp_port, timeout=30)
 
     try:
         server.login(actual_email, actual_password)
