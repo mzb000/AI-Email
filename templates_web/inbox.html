@@ -109,11 +109,9 @@
 <script>
 (function () {
   var emails = window._INBOX || [];
-  if (!emails.length) return;
-
-  var rows   = document.querySelectorAll('.irow');
+  var activeIdx = 0;
   var viewer = document.getElementById('iviewer');
-  if (!rows.length || !viewer) return;
+  var ilist  = document.getElementById('ilist');
 
   function escHtml(s) {
     return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -121,19 +119,18 @@
 
   function showEmail(idx) {
     var msg = emails[idx];
-    if (!msg) return;
+    if (!msg || !viewer) return;
+    activeIdx = idx;
 
-    rows.forEach(function(r){ r.classList.remove('active'); });
-    rows[idx].classList.add('active');
+    document.querySelectorAll('.irow').forEach(function(r){ r.classList.remove('active'); });
+    var activeRow = document.querySelector('.irow[data-idx="'+idx+'"]');
+    if (activeRow) activeRow.classList.add('active');
 
-    var subject = msg.subject || '(No subject)';
-    var from    = msg['from'] || '';
-    var date    = msg.date_full || msg.date_short || msg.date || '';
-    var body    = msg.body || '';
-
-    // Strip HTML tags from body for clean text display
-    var cleanBody = body.replace(/<[^>]*>/g, ' ').replace(/[ \t]+/g,' ').trim();
-
+    var subject   = msg.subject || '(No subject)';
+    var from      = msg['from'] || '';
+    var date      = msg.date_full || msg.date_short || msg.date || '';
+    var body      = msg.body || '';
+    var cleanBody = body.replace(/<[^>]*>/g,' ').replace(/[ \t]+/g,' ').trim();
     var replyTo   = encodeURIComponent(from);
     var replySubj = encodeURIComponent('Re: ' + subject);
     var fwdSubj   = encodeURIComponent('Fwd: ' + subject);
@@ -151,18 +148,80 @@
       '</div>';
   }
 
-  // Attach click handlers
-  rows.forEach(function(row) {
+  function buildRow(msg, idx) {
+    var fromName = (msg['from'] || '').split('<')[0].trim() || msg['from'] || '?';
+    var dateStr  = '';
+    if (msg.date_short) {
+      var parts = msg.date_short.split('·');
+      dateStr = parts[0].trim();
+    }
+    var av = (msg['from'] || '?').substring(0,2).toUpperCase();
+    var div = document.createElement('div');
+    div.className = 'irow' + (idx === activeIdx ? ' active' : '');
+    div.dataset.idx = idx;
+    div.innerHTML =
+      '<div class="irow-av">' + escHtml(av) + '</div>' +
+      '<div class="irow-body">' +
+        '<div class="irow-top">' +
+          '<span class="irow-from">' + escHtml(fromName) + '</span>' +
+          '<span class="irow-time">' + escHtml(dateStr) + '</span>' +
+        '</div>' +
+        '<div class="irow-subject">' + escHtml(msg.subject || '(No subject)') + '</div>' +
+        '<div class="irow-snip">' + escHtml((msg.body || '').substring(0,80)) + '</div>' +
+      '</div>';
+    div.addEventListener('click', function(){ showEmail(idx); });
+    return div;
+  }
+
+  function rebuildList(newEmails) {
+    if (!ilist) return;
+    emails = newEmails;
+    ilist.innerHTML = '';
+    emails.forEach(function(msg, idx){
+      ilist.appendChild(buildRow(msg, idx));
+    });
+    // Restore selected email
+    showEmail(Math.min(activeIdx, emails.length - 1));
+  }
+
+  // Attach click handlers to server-rendered rows
+  document.querySelectorAll('.irow').forEach(function(row) {
     row.addEventListener('click', function() {
       showEmail(parseInt(row.dataset.idx, 10));
     });
   });
 
   // Show first email on load
-  showEmail(0);
+  if (emails.length) showEmail(0);
+
+  // ── Auto-refresh every 30 seconds from cache (no IMAP hit) ──────────────────
+  var _newBanner = null;
+  setInterval(function() {
+    fetch('/inbox/data')
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if (!d.ok || !d.emails) return;
+        if (d.count > emails.length) {
+          // New emails arrived — show banner + update list silently
+          var diff = d.count - emails.length;
+          rebuildList(d.emails);
+          // Flash notification
+          if (!_newBanner) {
+            _newBanner = document.createElement('div');
+            _newBanner.style.cssText = 'position:fixed;top:16px;right:24px;background:#6366f1;color:#fff;padding:.6rem 1.1rem;border-radius:10px;font-size:.82rem;font-weight:600;z-index:9999;box-shadow:0 4px 20px rgba(99,102,241,.4);cursor:pointer;';
+            _newBanner.textContent = diff + ' new email' + (diff > 1 ? 's' : '') + ' arrived!';
+            _newBanner.onclick = function(){ _newBanner.remove(); _newBanner = null; };
+            document.body.appendChild(_newBanner);
+            setTimeout(function(){ if(_newBanner){_newBanner.remove();_newBanner=null;} }, 5000);
+          }
+        }
+      })
+      .catch(function(){});
+  }, 30000);
+
 })();
 
-// Refresh inbox
+// Manual refresh button
 function refreshInbox(btn) {
   var orig = btn.innerHTML;
   btn.innerHTML = '<span class="spinner" style="width:13px;height:13px;margin-right:4px;vertical-align:middle;"></span>Refreshing…';

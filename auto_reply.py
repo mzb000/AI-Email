@@ -3,6 +3,7 @@ from __future__ import annotations
 import email
 import json
 import time
+from datetime import datetime, timedelta
 from email.header import decode_header, make_header
 from email.message import EmailMessage
 from email.utils import parseaddr
@@ -54,8 +55,13 @@ def _decode_subject(raw_subject: str | None) -> str:
 def _fetch_target_mail(imap: imaplib.IMAP4_SSL) -> list[tuple[bytes, EmailMessage]]:
     imap.select("INBOX")
     criteria_tokens = [token for token in AUTO_REPLY_SEARCH_CRITERIA.split() if token]
-    if not criteria_tokens:
-        criteria_tokens = ["UNSEEN"]
+
+    # Default strategy: search emails from the last 24 hours regardless of read/unread status.
+    # This is more reliable than UNSEEN because viewing the inbox can mark emails as read.
+    # Deduplication is handled by replied_ids.json so we won't double-reply.
+    if not criteria_tokens or criteria_tokens == ["UNSEEN"]:
+        since_date = (datetime.utcnow() - timedelta(hours=24)).strftime("%d-%b-%Y")
+        criteria_tokens = ["SINCE", since_date]
 
     status, data = imap.search(None, *criteria_tokens)
     if status != "OK":

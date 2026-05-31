@@ -44,4 +44,6 @@ BATCH_SIZE = int(os.getenv("BATCH_SIZE", "10000"))
 
 SEND_TEMPLATE = TEMPLATE_DIR / "send.txt"
 REPLY_TEMPLATE = TEMPLATE_DIR / "reply.txt"
-REPLIED_LOG = BASE_DIR / "replied_ids.json"
+
+# REPLIED_LOG is configurable so it can point to a persistent volume on Railway
+REPLIED_LOG = Path(os.getenv("REPLIED_LOG_PATH", str(BASE_DIR / "replied_ids.json")))

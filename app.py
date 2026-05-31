@@ -402,6 +402,20 @@ async def inbox_page(request: Request, q: str = ""):
     })
 
 
+@app.get("/inbox/data")
+async def inbox_data(request: Request):
+    """Return cached emails as JSON — no IMAP call, used for auto-refresh polling."""
+    user, _ = _require_auth(request)
+    if not user:
+        return JSONResponse({"ok": False, "error": "Not authenticated"}, status_code=401)
+    try:
+        from mailbox import _load_cached_messages
+        msgs = _load_cached_messages()
+        return JSONResponse({"ok": True, "emails": msgs, "count": len(msgs)})
+    except Exception as e:
+        return JSONResponse({"ok": False, "error": str(e)})
+
+
 @app.post("/inbox/refresh")
 async def inbox_refresh(request: Request):
     user, _ = _require_auth(request)
