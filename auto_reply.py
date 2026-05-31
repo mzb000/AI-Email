@@ -88,22 +88,19 @@ def _should_skip_sender(address: str | None, from_email: str | None = None) -> b
     return sender_addr == check_addr
 
 
-def _send_reply(
-    email_id: bytes,
+def _build_reply(
     original_message: EmailMessage,
     template,
-    replied_ids: Set[str],
-    imap: imaplib.IMAP4_SSL,
-    email: str | None = None,
-    password: str | None = None,
-) -> bool:
+    from_email_addr: str,
+) -> tuple[str | None, str | None, "EmailMessage | None"]:
+    """Build a reply message. Returns (message_id, sender_email, reply_msg) or (None, None, None) if skipped."""
     message_id = original_message.get("Message-ID")
-    if not message_id or message_id in replied_ids:
-        return False
+    if not message_id:
+        return None, None, None
 
     sender_name, sender_email = parseaddr(original_message.get("From", ""))
-    if _should_skip_sender(sender_email, from_email=email):
-        return False
+    if _should_skip_sender(sender_email, from_email=from_email_addr):
+        return None, None, None
 
     context = {
         "original_subject": _decode_subject(original_message.get("Subject")),
@@ -111,17 +108,10 @@ def _send_reply(
         "sender_name": sender_name or sender_email,
     }
 
-    from_email_addr = email if email else EMAIL
     reply_message = build_message(sender_email, template, from_email=from_email_addr, **context)
-    reply_message["In-Reply-To"] = original_message.get("Message-ID", "")
-    reply_message["References"] = original_message.get("Message-ID", "")
-
-    with smtp_connection(email=email, password=password) as smtp:
-        smtp.send_message(reply_message)
-
-    replied_ids.add(message_id)
-    imap.store(email_id, "+FLAGS", "(\\Seen)")
-    return True
+    reply_message["In-Reply-To"] = message_id
+    reply_message["References"] = message_id
+    return message_id, sender_email, reply_message
 
 
 def process_unread_messages(
@@ -134,12 +124,36 @@ def process_unread_messages(
 
     actual_email = email if email else EMAIL
     actual_password = password if password else PASSWORD
+    from_email_addr = email if email else EMAIL
 
+    # Fetch pending messages first (IMAP only)
+    pending: list[tuple[bytes, EmailMessage, str, EmailMessage]] = []
     with imaplib.IMAP4_SSL(IMAP_SERVER) as imap:
         imap.login(actual_email, actual_password)
         for email_id, message in _fetch_target_mail(imap):
-            if _send_reply(email_id, message, template, replied_ids, imap, email=email, password=password):
-                processed_count += 1
+            msg_id = message.get("Message-ID")
+            if not msg_id or msg_id in replied_ids:
+                continue
+            mid, sender_email, reply_msg = _build_reply(message, template, from_email_addr)
+            if reply_msg is None:
+                continue
+            pending.append((email_id, message, mid, reply_msg))
+
+    if not pending:
+        return 0
+
+    # Send all replies over a SINGLE SMTP connection
+    with smtp_connection(email=email, password=password) as smtp:
+        with imaplib.IMAP4_SSL(IMAP_SERVER) as imap:
+            imap.login(actual_email, actual_password)
+            for email_id, _orig, mid, reply_msg in pending:
+                try:
+                    smtp.send_message(reply_msg)
+                    replied_ids.add(mid)
+                    imap.store(email_id, "+FLAGS", "(\\Seen)")
+                    processed_count += 1
+                except Exception:
+                    pass  # skip individual failures; will retry next poll
 
     if processed_count:
         _save_replied_ids(replied_ids)
@@ -182,12 +196,22 @@ class AutoReplyService:
 
         def _worker() -> None:
             self._emit("Auto-reply worker started.")
+            _fail_count = 0
             while not self._stop_event.is_set():
-                processed = process_unread_messages(email=svc_email, password=svc_password)
-                if processed:
-                    self._emit(f"Auto-replied to {processed} message(s).")
-                else:
-                    self._emit("No new emails detected.")
+                try:
+                    processed = process_unread_messages(email=svc_email, password=svc_password)
+                    _fail_count = 0  # reset on success
+                    if processed:
+                        self._emit(f"Auto-replied to {processed} message(s).")
+                    else:
+                        self._emit("No new emails detected.")
+                except Exception as exc:
+                    _fail_count += 1
+                    self._emit(f"Auto-reply error (attempt {_fail_count}): {exc}")
+                    # Back off after repeated failures but keep running
+                    backoff = min(self.poll_interval * _fail_count, 300)
+                    self._stop_event.wait(backoff)
+                    continue
                 self._stop_event.wait(self.poll_interval)
             self._emit("Auto-reply worker stopped.")
 
