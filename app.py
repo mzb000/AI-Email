@@ -1152,6 +1152,30 @@ async def start_scheduler():
     t.start()
 
 
+@app.get("/diag/smtp")
+async def diag_smtp(request: Request):
+    """Diagnostic endpoint — tests SMTP connectivity on port 465."""
+    import socket, ssl, time
+    results = {}
+    host = "smtp.gmail.com"
+    for port in [465, 587]:
+        t0 = time.time()
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(10)
+            ip = socket.gethostbyname(host)
+            sock.connect((ip, port))
+            elapsed = round(time.time() - t0, 2)
+            if port == 465:
+                ctx = ssl.create_default_context()
+                sock = ctx.wrap_socket(sock, server_hostname=host)
+            results[port] = {"ok": True, "ip": ip, "elapsed": elapsed}
+            sock.close()
+        except Exception as e:
+            results[port] = {"ok": False, "error": str(e), "elapsed": round(time.time() - t0, 2)}
+    return JSONResponse({"smtp_tests": results})
+
+
 # ── Contacts routes ───────────────────────────────────────────────────────────
 
 @app.get("/contacts")
